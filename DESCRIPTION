@@ -1,8 +1,8 @@
 Package: worldbank
 Title: Client for the 'World Bank Indicators API'
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: 
-    person("Maximilian", "Muecke", , "muecke.maximilian@gmail.com", role = c("aut", "cre"),
+    person("Maximilian", "Mücke", , "muecke.maximilian@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0000-9432-9795"))
 Description: Download and search data from the 'World Bank Indicators
     API', which provides access to nearly 16,000 time series indicators.
@@ -20,8 +20,8 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2024-07-01 10:30:47 UTC; mmuecke
-Author: Maximilian Muecke [aut, cre] (<https://orcid.org/0009-0000-9432-9795>)
-Maintainer: Maximilian Muecke <muecke.maximilian@gmail.com>
+Packaged: 2024-07-31 20:10:34 UTC; mmuecke
+Author: Maximilian Mücke [aut, cre] (<https://orcid.org/0009-0000-9432-9795>)
+Maintainer: Maximilian Mücke <muecke.maximilian@gmail.com>
 Repository: CRAN
-Date/Publication: 2024-07-02 14:50:02 UTC
+Date/Publication: 2024-07-31 22:30:05 UTC

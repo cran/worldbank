@@ -8,22 +8,24 @@
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![R-CMD-check](https://github.com/m-muecke/worldbank/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/m-muecke/worldbank/actions/workflows/R-CMD-check.yaml)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/worldbank)](https://CRAN.R-project.org/package=worldbank)
 <!-- badges: end -->
 
 ## Overview
 
 The goal of worldbank is to provide a simple interface to the [World
-Bank API
+Bank Indicators API
 v2](https://datahelpdesk.worldbank.org/knowledgebase/articles/889392-about-the-indicators-api-documentation).
 The main difference to other packages is that it’s a modern
-implementation using the [httr2](https://httr2.r-lib.org) package
-without any other dependencies.
+implementation using the [httr2](https://httr2.r-lib.org) package and
+supports all available endpoints and parameters.
 
 The `worldbank` package provides a set of functions to interact with
-various endpoints of the World Bank API. Each function is designed to
-retrieve specific types of data, making it easier to access and analyze
-World Bank datasets. Below is an overview of the available endpoints and
-their corresponding functions in the package:
+various endpoints of the World Bank Indicators API. Each function is
+designed to retrieve specific types of data, making it easier to access
+and analyze World Bank datasets. Below is an overview of the available
+endpoints and their corresponding functions in the package:
 
 - **Languages** (`wb_language`): Retrieves a list of all languages
   supported by the World Bank API. Useful for obtaining
@@ -51,8 +53,14 @@ their corresponding functions in the package:
 
 ## Installation
 
-You can install the development version of worldbank from
-[GitHub](https://github.com/) with:
+You can install the released version of **worldbank** from
+[CRAN](https://CRAN.R-project.org) with:
+
+``` r
+install.packages("worldbank")
+```
+
+And the development version from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("pak")
@@ -80,9 +88,6 @@ wb_country(c("US", "DE"))
 #> #   income_level_value <chr>, lending_type_id <chr>, lending_type_code <chr>,
 #> #   lending_type_value <chr>, capital_city <chr>, longitude <dbl>,
 #> #   latitude <dbl>
-```
-
-``` r
 
 # or fetch all (default)
 wb_country()
@@ -100,14 +105,12 @@ wb_country()
 #> #   income_level_value <chr>, lending_type_id <chr>, lending_type_code <chr>,
 #> #   lending_type_value <chr>, capital_city <chr>, longitude <dbl>,
 #> #   latitude <dbl>
-```
-
-``` r
 
 # search for specific indicator
 ind <- wb_indicator()
 ind <- subset(
-  ind, grepl("GDP", id, fixed = TRUE) & source_value == "World Development Indicators"
+  ind,
+  grepl("GDP", id, fixed = TRUE) & source_value == "World Development Indicators"
 )
 ind
 #> # A tibble: 35 × 9
@@ -120,22 +123,19 @@ ind
 #> 5 NY.GDP.DEF… Infl… <NA>  2         World Devel… Inflation … World Bank nationa…
 #> # ℹ 30 more rows
 #> # ℹ 2 more variables: topic_id <chr>, topic_value <chr>
-```
-
-``` r
 
 # fetch indicator data for specific or all countries (default)
 gdp <- wb_country_indicator("NY.GDP.MKTP.CD", c("US", "DE", "FR", "CH", "JP"))
 gdp
-#> # A tibble: 295 × 10
+#> # A tibble: 320 × 10
 #>    date indicator_id indicator_name country_id country_name country_code   value
 #>   <int> <chr>        <chr>          <chr>      <chr>        <chr>          <dbl>
-#> 1  2022 NY.GDP.MKTP… GDP (current … CH         Switzerland  CHE          8.18e11
-#> 2  2021 NY.GDP.MKTP… GDP (current … CH         Switzerland  CHE          8.13e11
-#> 3  2020 NY.GDP.MKTP… GDP (current … CH         Switzerland  CHE          7.42e11
-#> 4  2019 NY.GDP.MKTP… GDP (current … CH         Switzerland  CHE          7.21e11
-#> 5  2018 NY.GDP.MKTP… GDP (current … CH         Switzerland  CHE          7.26e11
-#> # ℹ 290 more rows
+#> 1  2023 NY.GDP.MKTP… GDP (current … CH         Switzerland  CHE          8.85e11
+#> 2  2022 NY.GDP.MKTP… GDP (current … CH         Switzerland  CHE          8.18e11
+#> 3  2021 NY.GDP.MKTP… GDP (current … CH         Switzerland  CHE          8.13e11
+#> 4  2020 NY.GDP.MKTP… GDP (current … CH         Switzerland  CHE          7.42e11
+#> 5  2019 NY.GDP.MKTP… GDP (current … CH         Switzerland  CHE          7.21e11
+#> # ℹ 315 more rows
 #> # ℹ 3 more variables: unit <chr>, obs_status <chr>, decimal <int>
 ```
 
@@ -143,7 +143,9 @@ gdp
 
 ## Related work
 
-- [wbstats](https://github.com/gshs-ornl/wbstats): An R package for
+- [wbstats](https://github.com/gshs-ornl/wbstats): R package for
   searching and downloading data from the World Bank API
 - [WDI](https://github.com/vincentarelbundock/WDI): R package to
   download World Bank data
+- [pipr](https://github.com/worldbank/pipr): R client for the PIP
+  Worldbank API
