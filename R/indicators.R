@@ -7,7 +7,8 @@
 #'   \item{code}{The language code.}
 #'   \item{name}{The language name.}
 #'   \item{native_form}{The native form of the language name.}
-#' @source <http://api.worldbank.org/v2/languages>
+#' @source <https://api.worldbank.org/v2/languages>
+#' @family indicators data
 #' @export
 #' @examples
 #' wb_language()
@@ -16,7 +17,8 @@ wb_language <- function() {
   res <- data.frame(
     code = map_chr(data, "code"),
     name = map_chr(data, "name"),
-    native_form = map_chr(data, "nativeForm")
+    native_form = map_chr(data, "nativeForm"),
+    check.names = FALSE
   )
   res <- clean_strings(res)
   as_tibble(res)
@@ -34,7 +36,8 @@ wb_language <- function() {
 #'   \item{id}{The lending type ID.}
 #'   \item{iso2code}{The ISO 2 code of the lending type.}
 #'   \item{value}{The lending type value.}
-#' @source <http://api.worldbank.org/v2/lendingTypes>
+#' @source <https://api.worldbank.org/v2/lendingTypes>
+#' @family indicators data
 #' @export
 #' @examples
 #' wb_lending_type()
@@ -47,7 +50,8 @@ wb_lending_type <- function(type = NULL, lang = "en") {
   res <- data.frame(
     id = map_chr(data, "id"),
     iso2code = map_chr(data, "iso2code"),
-    value = map_chr(data, "value")
+    value = map_chr(data, "value"),
+    check.names = FALSE
   )
   res <- clean_strings(res)
   as_tibble(res)
@@ -65,7 +69,8 @@ wb_lending_type <- function(type = NULL, lang = "en") {
 #'   \item{id}{The income level ID.}
 #'   \item{iso2code}{The ISO 2 code of the income level.}
 #'   \item{value}{The income level value.}
-#' @source <http://api.worldbank.org/v2/incomeLevels>
+#' @source <https://api.worldbank.org/v2/incomeLevels>
+#' @family indicators data
 #' @export
 #' @examples
 #' wb_income_level()
@@ -78,7 +83,8 @@ wb_income_level <- function(income = NULL, lang = "en") {
   res <- data.frame(
     id = map_chr(data, "id"),
     iso2code = map_chr(data, "iso2code"),
-    value = map_chr(data, "value")
+    value = map_chr(data, "value"),
+    check.names = FALSE
   )
   res <- clean_strings(res)
   as_tibble(res)
@@ -102,7 +108,8 @@ wb_income_level <- function(income = NULL, lang = "en") {
 #'   \item{data_availability}{Whether the source has data available.}
 #'   \item{metadata_availability}{Whether the source has metadata available.}
 #'   \item{concepts}{The concepts associated with the source.}
-#' @source <http://api.worldbank.org/v2/sources>
+#' @source <https://api.worldbank.org/v2/sources>
+#' @family indicators data
 #' @export
 #' @examples
 #' wb_source()
@@ -121,7 +128,8 @@ wb_source <- function(source = NULL, lang = "en") {
     url = map_chr(data, "url"),
     data_availability = map_chr(data, "dataavailability") |> to_logical(),
     metadata_availability = map_chr(data, "metadataavailability") |> to_logical(),
-    concepts = map_chr(data, "concepts") |> as.integer()
+    concepts = map_chr(data, "concepts") |> as.integer(),
+    check.names = FALSE
   )
   res <- clean_strings(res)
   as_tibble(res)
@@ -139,7 +147,8 @@ wb_source <- function(source = NULL, lang = "en") {
 #'   \item{id}{The topic ID.}
 #'   \item{value}{The topic value.}
 #'   \item{source_note}{The source note.}
-#' @source <http://api.worldbank.org/v2/topics>
+#' @source <https://api.worldbank.org/v2/topics>
+#' @family indicators data
 #' @export
 #' @examples
 #' wb_topic()
@@ -152,7 +161,8 @@ wb_topic <- function(topic = NULL, lang = "en") {
   res <- data.frame(
     id = map_chr(data, "id") |> as.integer(),
     value = map_chr(data, "value"),
-    source_note = map_chr(data, "sourceNote")
+    source_note = map_chr(data, "sourceNote"),
+    check.names = FALSE
   )
   res <- clean_strings(res)
   as_tibble(res)
@@ -171,7 +181,8 @@ wb_topic <- function(topic = NULL, lang = "en") {
 #'   \item{code}{The region code.}
 #'   \item{iso2code}{The ISO 2 code of the region.}
 #'   \item{name}{The region name.}
-#' @source <http://api.worldbank.org/v2/region>
+#' @source <https://api.worldbank.org/v2/region>
+#' @family indicators data
 #' @export
 #' @examples
 #' wb_region()
@@ -188,7 +199,8 @@ wb_region <- function(region = NULL, lang = "en") {
     id = map_chr(data, "id") |> na_if_empty() |> as.integer(),
     code = map_chr(data, "code"),
     iso2code = map_chr(data, "iso2code"),
-    name = map_chr(data, "name")
+    name = map_chr(data, "name"),
+    check.names = FALSE
   )
   res <- clean_strings(res)
   as_tibble(res)
@@ -221,7 +233,8 @@ wb_region <- function(region = NULL, lang = "en") {
 #'   \item{capital_city}{The capital city.}
 #'   \item{longitude}{The longitude.}
 #'   \item{latitude}{The latitude.}
-#' @source <http://api.worldbank.org/v2/country>
+#' @source <https://api.worldbank.org/v2/country>
+#' @family indicators data
 #' @export
 #' @examples
 #' wb_country()
@@ -252,7 +265,8 @@ wb_country <- function(country = NULL, lang = "en") {
     lending_type_value = map_chr(data, \(x) x$lendingType$value),
     capital_city = map_chr(data, "capitalCity"),
     longitude = map_chr(data, "longitude") |> na_if_empty() |> as.numeric(),
-    latitude = map_chr(data, "latitude") |> na_if_empty() |> as.numeric()
+    latitude = map_chr(data, "latitude") |> na_if_empty() |> as.numeric(),
+    check.names = FALSE
   )
   res <- clean_strings(res)
   as_tibble(res)
@@ -276,7 +290,8 @@ wb_country <- function(country = NULL, lang = "en") {
 #'   \item{source_organization}{The source organization.}
 #'   \item{topic_id}{The topic ID.}
 #'   \item{topic_value}{The topic value.}
-#' @source <http://api.worldbank.org/v2/indicator>
+#' @source <https://api.worldbank.org/v2/indicator>
+#' @family indicators data
 #' @export
 #' @examples
 #' wb_indicator("NY.GDP.MKTP.CD")
@@ -307,7 +322,8 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
       } else {
         NA_character_
       }
-    })
+    }),
+    check.names = FALSE
   )
   res <- clean_strings(res)
   as_tibble(res)
@@ -341,7 +357,7 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
 #'   \item{unit}{The indicator unit.}
 #'   \item{obs_status}{The observation status.}
 #'   \item{decimal}{The decimal.}
-#' @source <http://api.worldbank.org/v2/country/{country}/indicator/{indicator}>
+#' @source <https://api.worldbank.org/v2/country/{country}/indicator/{indicator}>
 #' @export
 #' @examples
 #' wb_country_indicator("NY.GDP.MKTP.CD", "US")
@@ -385,7 +401,8 @@ wb_country_indicator <- function(indicator = "NY.GDP.MKTP.CD",
       value = x$value,
       unit = x$unit,
       obs_status = x$obs_status,
-      decimal = x$decimal
+      decimal = x$decimal,
+      check.names = FALSE
     )
   })
   res <- do.call(rbind, res)
@@ -423,7 +440,7 @@ wb_error_body <- function(resp) {
 
 worldbank <- function(resource, ..., lang = NULL, per_page = 32500L) {
   stopifnot(is_string_or_null(lang), nchar(lang) == 2L)
-  body <- request("http://api.worldbank.org/v2") |>
+  body <- request("https://api.worldbank.org/v2") |>
     req_user_agent("worldbank (https://m-muecke.github.io/worldbank)") |>
     req_url_path_append(lang, resource) |>
     req_url_query(..., format = "json", per_page = per_page) |>
@@ -434,7 +451,7 @@ worldbank <- function(resource, ..., lang = NULL, per_page = 32500L) {
 }
 
 worldbank_iter <- function(resource, resp_data, ..., per_page = 32500L) {
-  req <- request("http://api.worldbank.org/v2") |>
+  req <- request("https://api.worldbank.org/v2") |>
     req_user_agent("worldbank (https://m-muecke.github.io/worldbank)") |>
     req_url_path_append(resource) |>
     req_url_query(..., format = "json", per_page = per_page) |>
