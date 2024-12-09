@@ -21,7 +21,7 @@ wb_language <- function() {
     check.names = FALSE
   )
   res <- clean_strings(res)
-  as_tibble(res)
+  res
 }
 
 #' World Bank lending type data
@@ -54,7 +54,7 @@ wb_lending_type <- function(type = NULL, lang = "en") {
     check.names = FALSE
   )
   res <- clean_strings(res)
-  as_tibble(res)
+  res
 }
 
 #' World Bank income level data
@@ -87,7 +87,7 @@ wb_income_level <- function(income = NULL, lang = "en") {
     check.names = FALSE
   )
   res <- clean_strings(res)
-  as_tibble(res)
+  res
 }
 
 #' World Bank source data
@@ -132,7 +132,7 @@ wb_source <- function(source = NULL, lang = "en") {
     check.names = FALSE
   )
   res <- clean_strings(res)
-  as_tibble(res)
+  res
 }
 
 #' World Bank topic data
@@ -165,7 +165,7 @@ wb_topic <- function(topic = NULL, lang = "en") {
     check.names = FALSE
   )
   res <- clean_strings(res)
-  as_tibble(res)
+  res
 }
 
 #' World Bank region data
@@ -203,7 +203,7 @@ wb_region <- function(region = NULL, lang = "en") {
     check.names = FALSE
   )
   res <- clean_strings(res)
-  as_tibble(res)
+  res
 }
 
 #' World Bank country data
@@ -269,7 +269,7 @@ wb_country <- function(country = NULL, lang = "en") {
     check.names = FALSE
   )
   res <- clean_strings(res)
-  as_tibble(res)
+  res
 }
 
 #' World Bank indicator data
@@ -309,14 +309,14 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
     source_value = map_chr(data, \(x) x$source$value),
     source_note = map_chr(data, "sourceNote"),
     source_organization = map_chr(data, "sourceOrganization"),
-    topic_id = map_chr(data, \(x) {
+    topic_id = map_chr(data, function(x) {
       if (length(x$topics) > 0L && length(x$topics[[1L]]) > 0L) {
         x$topics[[1L]]$id
       } else {
         NA_character_
       }
     }),
-    topic_value = map_chr(data, \(x) {
+    topic_value = map_chr(data, function(x) {
       if (length(x$topics) > 0L && length(x$topics[[1L]]) > 0L) {
         x$topics[[1L]]$value
       } else {
@@ -326,7 +326,7 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
     check.names = FALSE
   )
   res <- clean_strings(res)
-  as_tibble(res)
+  res
 }
 
 #' World Bank country indicator data
@@ -378,8 +378,8 @@ wb_country_indicator <- function(indicator = "NY.GDP.MKTP.CD",
   )
   has_start_date <- !is.null(start_date)
   has_end_date <- !is.null(end_date)
-  if (has_start_date && has_end_date) {
-    stopifnot(start_date <= end_date)
+  if (has_start_date && has_end_date && start_date > end_date) {
+    stop("`start_date` must be earlier than `end_date`.", call. = FALSE)
   }
   indicator <- toupper(indicator)
   country <- tolower(format_param(country))
@@ -387,7 +387,7 @@ wb_country_indicator <- function(indicator = "NY.GDP.MKTP.CD",
 
   resource <- sprintf("country/%s/indicator/%s", country, indicator)
   data <- worldbank(resource, lang = lang, date = date)
-  res <- map(data, \(x) {
+  res <- map(data, function(x) {
     if (is.null(x$value) || is.null(x$date)) {
       return()
     }
@@ -412,7 +412,7 @@ wb_country_indicator <- function(indicator = "NY.GDP.MKTP.CD",
     }
     res <- clean_strings(res)
   }
-  as_tibble(res)
+  res
 }
 
 is_wb_error <- function(resp) {

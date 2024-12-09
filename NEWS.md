@@ -1,3 +1,9 @@
+# worldbank 0.4.0
+
+* Removed conditional return of tibble and now always return a
+  data.frame instead. This ensures type stability across all functions.
+* Add support for Finances One API data.
+
 # worldbank 0.3.0
 
 - Moved to HTTPS for all API calls
