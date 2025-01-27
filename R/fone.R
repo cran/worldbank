@@ -1,10 +1,10 @@
 #' Return Finances One API Data
+#' @param dataset_id (`character(1)`) id of the associated dataset.
 #'
-#' @param dataset_id `character(1)` id of the associated dataset.
-#' @param resource_id `character(1)` id of the associated resource.
-#' @param view_id `character(1)` id of the view.
-#' @param ... additional arguments passed to the request.
-#' @param limit `integer(1)` the maximum number of rows to return. Default is `NULL`.
+#' @param resource_id (`character(1)`) id of the associated resource.
+#' @param view_id (`character(1)`) id of the view.
+#' @param ... (`any`) additional arguments passed to the request.
+#' @param limit (`integer(1)`) the maximum number of rows to return. Default is `NULL`.
 #'   If `NULL`, all rows are returned.
 #' @returns A `data.frame()` with the requested dataset.
 #' @source <https://financesone.worldbank.org/data>
@@ -17,7 +17,9 @@
 #' }
 fone_dataset <- function(dataset_id, resource_id, ..., limit = NULL) {
   stopifnot(
-    is_string(dataset_id), is_string(resource_id), is_count_or_null(limit)
+    is_string(dataset_id),
+    is_string(resource_id),
+    is_count_or_null(limit)
   )
   fone(
     resource = "apiservice",
@@ -40,7 +42,7 @@ fone <- function(resource, ..., limit = NULL) {
 
   req <- request("https://datacatalogapi.worldbank.org/dexapps/fone/api") |>
     req_user_agent("worldbank (https://m-muecke.github.io/worldbank)") |>
-    req_error(body = \(resp) resp_body_string(resp)) |>
+    req_error(body = \(resp) resp_body_string(resp, "UTF-8")) |>
     req_url_path_append(resource) |>
     req_url_query(top = limit, type = "csv", ...)
 
@@ -55,7 +57,7 @@ fone <- function(resource, ..., limit = NULL) {
 
   res <- resps_data(resps, function(resp) {
     if (length(resp$body) > 0L) {
-      body <- resp_body_string(resp)
+      body <- resp_body_string(resp, "UTF-8")
       utils::read.csv(textConnection(body, encoding = "UTF-8"))
     }
   })

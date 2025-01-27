@@ -23,18 +23,14 @@ is_string_or_null <- function(x, pattern = NULL, ...) {
 }
 
 is_count <- function(x) {
-  is.numeric(x) && length(x) == 1L && !is.na(x) &&
-    as.integer(x) == x && x > 0L
+  is.numeric(x) && length(x) == 1L && !is.na(x) && as.integer(x) == x && x > 0L
 }
 
 is_count_or_null <- function(x) {
   is.null(x) || is_count(x)
 }
 
-is_valid_date <- function(x) {
-  if (is.null(x)) {
-    return(TRUE)
-  }
+is_dateish <- function(x) {
   if (length(x) != 1L) {
     return(FALSE)
   }
@@ -44,4 +40,8 @@ is_valid_date <- function(x) {
   } else {
     FALSE
   }
+}
+
+is_dateish_or_null <- function(x) {
+  is.null(x) || is_dateish(x)
 }

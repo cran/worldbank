@@ -1,7 +1,7 @@
 Package: worldbank
 Title: Client for World Banks's 'Indicators' and 'Poverty and
         Inequality Platform (PIP)' APIs
-Version: 0.4.0
+Version: 0.5.0
 Authors@R: 
     person("Maximilian", "Mücke", , "muecke.maximilian@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0000-9432-9795"))
@@ -21,8 +21,8 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2024-12-09 21:25:19 UTC; mmuecke
+Packaged: 2025-01-27 20:24:50 UTC; mmuecke
 Author: Maximilian Mücke [aut, cre] (<https://orcid.org/0009-0000-9432-9795>)
 Maintainer: Maximilian Mücke <muecke.maximilian@gmail.com>
 Repository: CRAN
-Date/Publication: 2024-12-09 21:40:02 UTC
+Date/Publication: 2025-01-27 20:40:02 UTC

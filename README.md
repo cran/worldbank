@@ -14,7 +14,7 @@ status](https://www.r-pkg.org/badges/version/worldbank)](https://CRAN.R-project.
 
 ## Overview
 
-**worlbank** provides a simple interface to the following [World
+worlbank provides a simple interface to the following [World
 Bank](https://datahelpdesk.worldbank.org/knowledgebase/articles/889386-developer-information-overview)
 APIs:
 
@@ -27,36 +27,6 @@ APIs:
 The main difference to other packages is that it’s a modern
 implementation using the [httr2](https://httr2.r-lib.org) package and
 supports all available endpoints and parameters.
-
-The `worldbank` package provides a set of functions to interact with
-various endpoints of the World Bank Indicators API. Each function is
-designed to retrieve specific types of data, making it easier to access
-and analyze World Bank datasets. Below is an overview of the available
-endpoints and their corresponding functions in the package:
-
-- **Languages** (`wb_language`): Retrieves a list of all languages
-  supported by the World Bank API. Useful for obtaining
-  language-specific data.
-- **Lending Types** (`wb_lending_type`): Fetches information about
-  different lending types as recognized by the World Bank.
-- **Income Levels** (`wb_income_level`): Allows users to access data
-  about various income levels defined by the World Bank.
-- **Sources** (`wb_source`): Provides details about the different data
-  sources available within the World Bank’s datasets.
-- **Topics** (`wb_topic`): Lists all topics covered by the World Bank
-  API, helping users to narrow down their data search to specific areas
-  of interest.
-- **Regions** (`wb_region`): Offers information on different
-  geographical regions as categorized by the World Bank.
-- **Countries** (`wb_country`): Enables access to detailed data about
-  individual countries, including socio-economic and developmental
-  indicators.
-- **Country Indicators** (`wb_country_indicator`): Specific to
-  retrieving indicators for a particular country or countries, allowing
-  for more targeted data analysis.
-- **Indicators** (`wb_indicator`): This endpoint gives users access to a
-  wide array of indicators used by the World Bank in its data analysis
-  and reports.
 
 ## Installation
 
@@ -133,11 +103,11 @@ str(ind)
 #>  $ id                 : chr  "EG.GDP.PUSE.KO.PP" "EG.GDP.PUSE.KO.PP.KD" "EN.G"..
 #>  $ name               : chr  "GDP per unit of energy use (PPP $ per kg of oil"..
 #>  $ unit               : chr  NA NA NA NA ...
-#>  $ source_id          : chr  "2" "2" "2" "2" ...
+#>  $ source_id          : int  2 2 2 2 2 2 2 2 2 2 ...
 #>  $ source_value       : chr  "World Development Indicators" "World Developmen"..
 #>  $ source_note        : chr  "GDP per unit of energy use is the PPP GDP per k"..
 #>  $ source_organization: chr  "IEA Statistics © OECD/IEA 2014 (https://www.iea"..
-#>  $ topic_id           : chr  "5" "5" "6" "6" ...
+#>  $ topic_id           : int  5 5 6 6 6 6 3 7 3 7 ...
 #>  $ topic_value        : chr  "Energy & Mining" "Energy & Mining" "Environment"..
 
 # fetch indicator data for specific or all countries (default)
@@ -160,9 +130,11 @@ str(gdp)
 
 ## Related work
 
-- [wbstats](https://github.com/gshs-ornl/wbstats): R package for
-  searching and downloading data from the World Bank API
 - [WDI](https://github.com/vincentarelbundock/WDI): R package to
   download World Bank data
 - [pipr](https://github.com/worldbank/pipr): R client for the PIP
   Worldbank API
+- [wbstats](https://github.com/gshs-ornl/wbstats): R package for
+  searching and downloading data from the World Bank API
+- [wbwdi](https://github.com/tidy-intelligence/r-wbwdi): R package to
+  download World Bank indicator data

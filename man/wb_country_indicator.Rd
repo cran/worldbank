@@ -16,22 +16,22 @@ wb_country_indicator(
 )
 }
 \arguments{
-\item{indicator}{\code{character(1)} indicator to query.}
+\item{indicator}{(\code{character()}) indicators to query.}
 
-\item{country}{\code{character()} country to query. Default \code{NULL}.
+\item{country}{(\code{character()}) countries to query. Default \code{NULL}.
 If \code{NULL}, all countries are returned.}
 
-\item{lang}{\code{character(1)} language to query. Default \code{"en"}.}
+\item{lang}{(\code{character(1)}) language to query. Default \code{"en"}.}
 
-\item{start_date}{\code{character(1)} or \code{integer(1)} start date to query. Default \code{NULL}.
-Supported formats:
+\item{start_date}{(\code{character(1)} | \code{integer(1)}) start date to query.
+Default \code{NULL}. Supported formats:
 \itemize{
 \item YYYY for yearly data (e.g. \code{2020} or \code{"2020"})
-\item YYYYQ[1-4] for quarterly data (e.g. "2020Q1")
+\item YYYYQ[1-4] for quarterly data (e.g. \code{"2020Q1"})
 \item YYYYM[1-12] for monthly data (e.g. \code{"2020M02"})
 }}
 
-\item{end_date}{\code{character(1)} or \code{integer(1)} end date to query, in the same format
+\item{end_date}{(\code{character(1)} | \code{integer(1)}) end date to query, in the same format
 as start_date. Default \code{NULL}.}
 }
 \value{
@@ -52,9 +52,12 @@ The columns are:
 List all country indicators supported by the World Bank API.
 }
 \examples{
-wb_country_indicator("NY.GDP.MKTP.CD", "US")
-wb_country_indicator(
-  "DPANUSSPB", c("CHN", "BRA"),
-  start_date = "2012M01", end_date = "2012M08"
+ind <- wb_country_indicator("NY.GDP.MKTP.CD", "US")
+head(ind)
+ind <- wb_country_indicator(
+  indicator = c("NY.GDP.MKTP.CD", "FP.CPI.TOTL.ZG"),
+  country = c("US", "DE", "FR", "CH", "JP"),
+  start_date = 2015, end_date = 2023
 )
+head(ind)
 }
