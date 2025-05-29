@@ -1,3 +1,7 @@
+# worldbank 0.6.0
+
+* `wb_data()` has been added as an alias for `wb_country_indicator()`
+
 # worldbank 0.5.0
 
 * `wb_country_indicator()` now allows for multiple indicators to be

@@ -46,8 +46,10 @@ fone <- function(resource, ..., limit = NULL) {
     req_url_path_append(resource) |>
     req_url_query(top = limit, type = "csv", ...)
 
-  resps <- req_perform_iterative(req,
-    next_req = iterate_with_offset("skip",
+  resps <- req_perform_iterative(
+    req,
+    next_req = iterate_with_offset(
+      "skip",
       start = 0L,
       offset = 1000L,
       resp_complete = \(resp) length(resp$body) == 0L

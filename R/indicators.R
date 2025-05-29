@@ -20,8 +20,7 @@ wb_language <- function() {
     native_form = map_chr(data, "nativeForm"),
     check.names = FALSE
   )
-  res <- clean_strings(res)
-  res
+  clean_strings(res)
 }
 
 #' World Bank lending type data
@@ -53,8 +52,7 @@ wb_lending_type <- function(type = NULL, lang = "en") {
     value = map_chr(data, "value"),
     check.names = FALSE
   )
-  res <- clean_strings(res)
-  res
+  clean_strings(res)
 }
 
 #' World Bank income level data
@@ -86,8 +84,7 @@ wb_income_level <- function(income = NULL, lang = "en") {
     value = map_chr(data, "value"),
     check.names = FALSE
   )
-  res <- clean_strings(res)
-  res
+  clean_strings(res)
 }
 
 #' World Bank source data
@@ -120,19 +117,18 @@ wb_source <- function(source = NULL, lang = "en") {
   resource <- sprintf("source/%s", source)
   data <- worldbank(resource = resource, lang = lang)
   res <- data.frame(
-    id = map_chr(data, "id") |> as.integer(),
-    last_updated = map_chr(data, "lastupdated") |> as.Date(),
+    id = data |> map_chr("id") |> as.integer(),
+    last_updated = data |> map_chr("lastupdated") |> as.Date(),
     name = map_chr(data, "name"),
     code = map_chr(data, "code"),
     description = map_chr(data, "description"),
     url = map_chr(data, "url"),
-    data_availability = map_chr(data, "dataavailability") |> to_logical(),
-    metadata_availability = map_chr(data, "metadataavailability") |> to_logical(),
-    concepts = map_chr(data, "concepts") |> as.integer(),
+    data_availability = data |> map_chr("dataavailability") |> to_logical(),
+    metadata_availability = data |> map_chr("metadataavailability") |> to_logical(),
+    concepts = data |> map_chr("concepts") |> as.integer(),
     check.names = FALSE
   )
-  res <- clean_strings(res)
-  res
+  clean_strings(res)
 }
 
 #' World Bank topic data
@@ -164,8 +160,7 @@ wb_topic <- function(topic = NULL, lang = "en") {
     source_note = map_chr(data, "sourceNote"),
     check.names = FALSE
   )
-  res <- clean_strings(res)
-  res
+  clean_strings(res)
 }
 
 #' World Bank region data
@@ -197,14 +192,13 @@ wb_region <- function(region = NULL, lang = "en") {
   resource <- sprintf("%s/region/%s", lang, region)
   data <- worldbank(resource = resource)
   res <- data.frame(
-    id = map_chr(data, "id") |> na_if_empty() |> as.integer(),
+    id = data |> map_chr("id") |> na_if_empty() |> as.integer(),
     code = map_chr(data, "code"),
     iso2code = map_chr(data, "iso2code"),
     name = map_chr(data, "name"),
     check.names = FALSE
   )
-  res <- clean_strings(res)
-  res
+  clean_strings(res)
 }
 
 #' World Bank country data
@@ -267,12 +261,11 @@ wb_country <- function(country = NULL, lang = "en") {
     lending_type_code = map_chr(data, \(x) x$lendingType$iso2code),
     lending_type_value = map_chr(data, \(x) x$lendingType$value),
     capital_city = map_chr(data, "capitalCity"),
-    longitude = map_chr(data, "longitude") |> na_if_empty() |> as.numeric(),
-    latitude = map_chr(data, "latitude") |> na_if_empty() |> as.numeric(),
+    longitude = data |> map_chr("longitude") |> na_if_empty() |> as.numeric(),
+    latitude = data |> map_chr("latitude") |> na_if_empty() |> as.numeric(),
     check.names = FALSE
   )
-  res <- clean_strings(res)
-  res
+  clean_strings(res)
 }
 
 #' World Bank indicator data
@@ -308,17 +301,18 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
     id = map_chr(data, "id"),
     name = map_chr(data, "name"),
     unit = map_chr(data, "unit"),
-    source_id = map_chr(data, \(x) x$source$id) |> as.integer(),
+    source_id = data |> map_chr(\(x) x$source$id) |> as.integer(),
     source_value = map_chr(data, \(x) x$source$value),
     source_note = map_chr(data, "sourceNote"),
     source_organization = map_chr(data, "sourceOrganization"),
-    topic_id = map_chr(data, function(x) {
-      if (length(x$topics) > 0L && length(x$topics[[1L]]) > 0L) {
-        x$topics[[1L]]$id
-      } else {
-        NA_character_
-      }
-    }) |>
+    topic_id = data |> # nolint
+      map_chr(function(x) {
+        if (length(x$topics) > 0L && length(x$topics[[1L]]) > 0L) {
+          x$topics[[1L]]$id
+        } else {
+          NA_character_
+        }
+      }) |>
       as.integer(),
     topic_value = map_chr(data, function(x) {
       if (length(x$topics) > 0L && length(x$topics[[1L]]) > 0L) {
@@ -329,8 +323,7 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
     }),
     check.names = FALSE
   )
-  res <- clean_strings(res)
-  res
+  clean_strings(res)
 }
 
 #' World Bank country indicator data
@@ -372,11 +365,13 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
 #'   start_date = 2015, end_date = 2023
 #' )
 #' head(ind)
-wb_country_indicator <- function(indicator = "NY.GDP.MKTP.CD",
-                                 country = NULL,
-                                 lang = "en",
-                                 start_date = NULL,
-                                 end_date = NULL) {
+wb_country_indicator <- function(
+  indicator = "NY.GDP.MKTP.CD",
+  country = NULL,
+  lang = "en",
+  start_date = NULL,
+  end_date = NULL
+) {
   stopifnot(
     is_character(indicator),
     is_character_or_null(country),
@@ -408,9 +403,12 @@ wb_country_indicator <- function(indicator = "NY.GDP.MKTP.CD",
   if (nchar(res[1L, "date"]) == 4L) {
     res$date <- as.integer(res$date)
   }
-  res <- clean_strings(res)
-  res
+  clean_strings(res)
 }
+
+#' @rdname wb_country_indicator
+#' @export
+wb_data <- wb_country_indicator
 
 parse_country_indicator <- function(data) {
   res <- map(data, function(x) {
