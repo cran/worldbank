@@ -1,6 +1,5 @@
 #' World Bank available languages
 #'
-#' @description
 #' List all languages supported by the World Bank API.
 #'
 #' @returns A `data.frame()` with the available languages. The columns are:
@@ -25,12 +24,12 @@ wb_language <- function() {
 
 #' World Bank lending type data
 #'
-#' @description
 #' List all lending types supported by the World Bank API.
 #'
-#' @param type (`character()`) lending type to query. Default `NULL`.
-#'   If `NULL`, all types are returned.
-#' @param lang (`character(1)`) language to query. Default `"en"`.
+#' @param type (`NULL` | `character()`)\cr
+#'   lending type to query. Default `NULL`. If `NULL`, all types are returned.
+#' @param lang (`character(1)`)\cr
+#'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available lending types. The columns are:
 #'   \item{id}{The lending type ID.}
 #'   \item{iso2code}{The ISO 2 code of the lending type.}
@@ -41,7 +40,7 @@ wb_language <- function() {
 #' @examples
 #' wb_lending_type()
 wb_lending_type <- function(type = NULL, lang = "en") {
-  stopifnot(is_character_or_null(type), nchar(type) == 3L)
+  stopifnot(is_character(type, null_ok = TRUE), nchar(type) == 3L)
   type <- format_param(type)
 
   resource <- sprintf("lendingType/%s", type)
@@ -57,12 +56,12 @@ wb_lending_type <- function(type = NULL, lang = "en") {
 
 #' World Bank income level data
 #'
-#' @description
 #' List all income levels supported by the World Bank API.
 #'
-#' @param income (`character()`) income level to query. Default `NULL`.
-#'   If `NULL`, all levels are returned.
-#' @param lang (`character(1)`) language to query. Default `"en"`.
+#' @param income (`NULL` | `character()`)\cr
+#'   Income level to query. Default `NULL`. If `NULL`, all levels are returned.
+#' @param lang (`character(1)`)\cr
+#'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available income levels. The columns are:
 #'   \item{id}{The income level ID.}
 #'   \item{iso2code}{The ISO 2 code of the income level.}
@@ -73,7 +72,7 @@ wb_lending_type <- function(type = NULL, lang = "en") {
 #' @examples
 #' wb_income_level()
 wb_income_level <- function(income = NULL, lang = "en") {
-  stopifnot(is_character_or_null(income), nchar(income) == 3L)
+  stopifnot(is_character(income, null_ok = TRUE), nchar(income) == 3L)
   income <- format_param(income)
 
   resource <- sprintf("incomeLevel/%s", income)
@@ -89,12 +88,12 @@ wb_income_level <- function(income = NULL, lang = "en") {
 
 #' World Bank source data
 #'
-#' @description
 #' List all sources supported by the World Bank API.
 #'
-#' @param source (`character()`) source to query. Default `NULL`.
-#'   If `NULL`, all sources are returned.
-#' @param lang (`character(1)`) language to query. Default `"en"`.
+#' @param source (`NULL` | `character()`)\cr
+#'   Source to query. Default `NULL`. If `NULL`, all sources are returned.
+#' @param lang (`character(1)`)\cr
+#'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available sources. The columns are:
 #'   \item{id}{The source ID.}
 #'   \item{last_updated}{The date the source was last updated.}
@@ -111,7 +110,7 @@ wb_income_level <- function(income = NULL, lang = "en") {
 #' @examples
 #' wb_source()
 wb_source <- function(source = NULL, lang = "en") {
-  stopifnot(is_character_or_null(source))
+  stopifnot(is_character(source, null_ok = TRUE))
   source <- format_param(source)
 
   resource <- sprintf("source/%s", source)
@@ -133,12 +132,12 @@ wb_source <- function(source = NULL, lang = "en") {
 
 #' World Bank topic data
 #'
-#' @description
 #' List all topics supported by the World Bank API.
 #'
-#' @param topic (`character()`) topic to query. Default `NULL`.
-#'   If `NULL`, all topics are returned.
-#' @param lang (`character(1)`) language to query. Default `"en"`.
+#' @param topic (`NULL` | `character()`)\cr
+#'   Topic to query. Default `NULL`. If `NULL`, all topics are returned.
+#' @param lang (`character(1)`)\cr
+#'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available topics. The columns are:
 #'   \item{id}{The topic ID.}
 #'   \item{value}{The topic value.}
@@ -149,7 +148,7 @@ wb_source <- function(source = NULL, lang = "en") {
 #' @examples
 #' wb_topic()
 wb_topic <- function(topic = NULL, lang = "en") {
-  stopifnot(is_character_or_null(topic))
+  stopifnot(is_character(topic, null_ok = TRUE))
   topic <- format_param(topic)
 
   resource <- sprintf("topic/%s", topic)
@@ -165,12 +164,12 @@ wb_topic <- function(topic = NULL, lang = "en") {
 
 #' World Bank region data
 #'
-#' @description
 #' List all regions supported by the World Bank API.
 #'
-#' @param region (`character()`) region to query. Default `NULL`.
-#'   If `NULL`, all regions are returned
-#' @param lang (`character(1)`) language to query. Default `"en"`.
+#' @param region (`NULL` | `character()`)\cr
+#'   Region to query. Default `NULL`. If `NULL`, all regions are returned
+#' @param lang (`character(1)`)\cr
+#'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available regions. The columns are:
 #'   \item{id}{The region ID.}
 #'   \item{code}{The region code.}
@@ -183,7 +182,7 @@ wb_topic <- function(topic = NULL, lang = "en") {
 #' wb_region()
 wb_region <- function(region = NULL, lang = "en") {
   stopifnot(
-    is_character_or_null(region),
+    is_character(region, null_ok = TRUE),
     is_string(lang),
     nchar(lang) == 2L
   )
@@ -203,12 +202,12 @@ wb_region <- function(region = NULL, lang = "en") {
 
 #' World Bank country data
 #'
-#' @description
 #' List all countries supported by the World Bank API.
 #'
-#' @param country (`character()`) country to query. Default `NULL`.
-#'   If `NULL`, all countries are returned.
-#' @param lang (`character(1)`) language to query. Default `"en"`.
+#' @param country (`NULL` | `character()`)\cr
+#'   Country to query. Default `NULL`. If `NULL`, all countries are returned.
+#' @param lang (`character(1)`)\cr
+#'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available countries. The columns are:
 #'   \item{country_id}{The country ID.}
 #'   \item{country_code}{The country code.}
@@ -235,7 +234,7 @@ wb_region <- function(region = NULL, lang = "en") {
 #' wb_country()
 wb_country <- function(country = NULL, lang = "en") {
   stopifnot(
-    is_character_or_null(country),
+    is_character(country, null_ok = TRUE),
     nchar(country) %in% 2:3,
     is_string(lang),
     nchar(lang) == 2L
@@ -270,12 +269,12 @@ wb_country <- function(country = NULL, lang = "en") {
 
 #' World Bank indicator data
 #'
-#' @description
 #' List all indicators supported by the World Bank API.
 #'
-#' @param indicator (`character(1)`) indicator to query. Default `NULL`.
-#'   If `NULL`, all indicators are returned.
-#' @param lang (`character(1)`) language to query. Default `"en"`.
+#' @param indicator (`NULL` | `character(1)`)\cr
+#'   Indicator to query. Default `NULL`. If `NULL`, all indicators are returned.
+#' @param lang (`character(1)`)\cr
+#'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available indicators. The columns are:
 #'   \item{id}{The indicator ID.}
 #'   \item{name}{The indicator name.}
@@ -292,7 +291,7 @@ wb_country <- function(country = NULL, lang = "en") {
 #' @examples
 #' wb_indicator("NY.GDP.MKTP.CD")
 wb_indicator <- function(indicator = NULL, lang = "en") {
-  stopifnot(is_string_or_null(indicator))
+  stopifnot(is_string(indicator, null_ok = TRUE))
   indicator <- indicator %||% "all"
 
   resource <- sprintf("indicator/%s", indicator)
@@ -328,20 +327,21 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
 
 #' World Bank country indicator data
 #'
-#' @description
 #' List all country indicators supported by the World Bank API.
 #'
-#' @param indicator (`character()`) indicators to query.
-#' @param country (`character()`) countries to query. Default `NULL`.
-#'   If `NULL`, all countries are returned.
-#' @param lang (`character(1)`) language to query. Default `"en"`.
-#' @param start_date (`character(1)` | `integer(1)`) start date to query.
-#'   Default `NULL`. Supported formats:
+#' @param indicator (`character()`)\cr
+#'   Indicators to query.
+#' @param country (`NULL` | `character()`)\cr
+#'   Countries to query. Default `NULL`. If `NULL`, all countries are returned.
+#' @param lang (`character(1)`)\cr
+#'   Language to query. Default `"en"`.
+#' @param start_date (`NULL` | `character(1)` | `integer(1)`)\cr
+#'   Start date to query. Default `NULL`. Supported formats:
 #'   * YYYY for yearly data (e.g. `2020` or `"2020"`)
 #'   * YYYYQ\[1-4\] for quarterly data (e.g. `"2020Q1"`)
 #'   * YYYYM\[1-12\] for monthly data (e.g. `"2020M02"`)
-#' @param end_date (`character(1)` | `integer(1)`) end date to query, in the same format
-#'   as start_date. Default `NULL`.
+#' @param end_date (`NULL` | `character(1)` | `integer(1)`)\cr
+#'   End date to query, in the same format as start_date. Default `NULL`.
 #' @returns A `data.frame()` with the available country indicators.
 #'   The columns are:
 #'   \item{date}{The date}
@@ -374,10 +374,10 @@ wb_country_indicator <- function(
 ) {
   stopifnot(
     is_character(indicator),
-    is_character_or_null(country),
+    is_character(country, null_ok = TRUE),
     nchar(country) %in% 2:3,
-    is_dateish_or_null(start_date),
-    is_dateish_or_null(end_date)
+    is_dateish(start_date, null_ok = TRUE),
+    is_dateish(end_date, null_ok = TRUE)
   )
   has_start_date <- !is.null(start_date)
   has_end_date <- !is.null(end_date)
@@ -437,8 +437,8 @@ is_wb_error <- function(resp) {
   if (status >= 400L) {
     return(TRUE)
   }
-  body <- resp_body_json(resp)
-  if (length(body) == 1L && length(body[[1L]]$message) == 1L) {
+  json <- resp_body_json(resp)
+  if (length(json) == 1L && length(json[[1L]]$message) == 1L) {
     return(TRUE)
   }
   FALSE
@@ -447,8 +447,8 @@ is_wb_error <- function(resp) {
 wb_error_body <- function(resp) {
   content_type <- resp_content_type(resp)
   if (identical(content_type, "application/json")) {
-    body <- resp_body_json(resp)
-    msg <- body[[1L]]$message[[1L]]
+    json <- resp_body_json(resp)
+    msg <- json[[1L]]$message[[1L]]
     error_code <- paste("Error code:", msg$id)
     docs <- "Read more at <https://datahelpdesk.worldbank.org/knowledgebase/articles/898620-api-error-codes>" # nolint
     c(error_code, msg$value, docs)
@@ -456,7 +456,7 @@ wb_error_body <- function(resp) {
 }
 
 worldbank <- function(resource, ..., lang = NULL, per_page = 32500L) {
-  stopifnot(is_string_or_null(lang), nchar(lang) == 2L)
+  stopifnot(is_string(lang, null_ok = TRUE), nchar(lang) == 2L)
   body <- request("https://api.worldbank.org/v2") |>
     req_user_agent("worldbank (https://m-muecke.github.io/worldbank)") |>
     req_url_path_append(lang, resource) |>
@@ -468,7 +468,7 @@ worldbank <- function(resource, ..., lang = NULL, per_page = 32500L) {
 }
 
 worldbank_seq <- function(resource, resp_data, ..., lang = NULL, per_page = 32500L) {
-  stopifnot(is_string_or_null(lang), nchar(lang) == 2L)
+  stopifnot(is_string(lang, null_ok = TRUE), nchar(lang) == 2L)
   req <- request("https://api.worldbank.org/v2") |>
     req_user_agent("worldbank (https://m-muecke.github.io/worldbank)") |>
     req_url_query(..., format = "json", per_page = per_page) |>

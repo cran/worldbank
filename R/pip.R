@@ -1,25 +1,29 @@
 #' Return main poverty and inequality statistics
 #'
-#' @param country (`character()`) countries for which statistics are to be computed,
-#'   specified as ISO3 codes. Default `NULL`.
-#' @param year (`character()` | `numeric()`) year(s) for which statistics are to be
-#'   computed, specified as YYYY. Default `NULL`.
-#' @param povline (`numeric(1)`) poverty line to be used to compute poverty mesures.
-#'   Poverty lines are only accepted up to 3 decimals. Default `2.15`.
-#' @param popshare (`numeric(1)`) proportion of the population living below the poverty
-#'   line. Will be ignored if povline is specified. Default `NULL`.
-#' @param fill_gaps (`logical(1)`) whether to fill gaps in the data. Default `FALSE`.
-#' @param welfare_type (`character(1)`) type of welfare measure to be used.
-#'   Default `"all"`.
-#' @param reporting_level (`character(1)`) level of reporting for the statistics.
-#'   Default `"all"`.
-#' @param additional_ind (`logical(1)`) whether to include additional indicators.
-#'   Default `FALSE`.
-#' @param release_version (`character(1)`) version of the data release in YYYYMMDD
-#'   format. Default `NULL`.
-#' @param ppp_version (`character(1)` | `numeric(1)`) version of the data.
-#'   Default `NULL`.
-#' @param version (`character(1)`) version of the data. Default `NULL`.
+#' @param country (`NULL` | `character()`)\cr
+#'   Countries for which statistics are to be computed, specified as ISO3 codes. Default `NULL`.
+#' @param year (`NULL` | `character()` | `numeric()`)\cr
+#'   Years for which statistics are to be computed, specified as YYYY. Default `NULL`.
+#' @param povline (`numeric(1)`)\cr
+#'   Poverty line to be used to compute poverty mesures. Poverty lines are only accepted up to 3
+#'   decimals. Default `2.15`.
+#' @param popshare (`NULL` | `numeric(1)`)\cr
+#'   Proportion of the population living below the poverty line. Will be ignored if povline is
+#'   specified. Default `NULL`.
+#' @param fill_gaps (`logical(1)`)\cr
+#'   Whether to fill gaps in the data. Default `FALSE`.
+#' @param welfare_type (`character(1)`)\cr
+#'   Type of welfare measure to be used. Default `"all"`.
+#' @param reporting_level (`character(1)`)\cr
+#'   level of reporting for the statistics. Default `"all"`.
+#' @param additional_ind (`logical(1)`)\cr
+#'   Whether to include additional indicators. Default `FALSE`.
+#' @param release_version (`NULL` | `character(1)`)\cr
+#'   Version of the data release in YYYYMMDD format. Default `NULL`.
+#' @param ppp_version (`NULL` | `character(1)` | `numeric(1)`)\cr
+#'   Version of the data. Default `NULL`.
+#' @param version (`NULL` | `character(1)`)\cr
+#'   Version of the data. Default `NULL`.
 #' @returns A `data.frame()` with the requested statistics.
 #' @source <https://pip.worldbank.org/api>
 #' @family poverty and inequality statistics
@@ -52,11 +56,11 @@ pip_data <- function(
   stopifnot(
     is.null(country) || is_character(country) && all(nchar(country) == 3L),
     is.null(year) || is_character(year) && all(grepl("[0-9]{4}", year)),
-    is_bool(fill_gaps),
-    is_string_or_null(release_version, "[0-9]{8}"),
-    is_bool(additional_ind),
-    is_string_or_null(ppp_version, "[0-9]{4}"),
-    is_string_or_null(version)
+    is_flag(fill_gaps),
+    is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
+    is_flag(additional_ind),
+    is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_string(version, null_ok = TRUE)
   )
   res <- pip(
     resource = "pip",
@@ -80,8 +84,8 @@ pip_data <- function(
 #' Return aggregation of PIP statistics
 #'
 #' @inheritParams pip_data
-#' @param group_by (`character(1)`) aggregate results by pre-defined sub-groups.
-#'   Default `"wb"`.
+#' @param group_by (`character(1)`)\cr
+#'   Aggregate results by pre-defined sub-groups. Default `"wb"`.
 #' @returns A `data.frame()` with the requested statistics.
 #' @inherit pip_data source
 #' @family poverty and inequality statistics
@@ -116,11 +120,11 @@ pip_group <- function(
   stopifnot(
     is.null(country) || is_character(country) && all(nchar(country) == 3L),
     is.null(year) || is_character(year) && all(grepl("[0-9]{4}", year)),
-    is_bool(fill_gaps),
-    is_string_or_null(release_version, "[0-9]{8}"),
-    is_bool(additional_ind),
-    is_string_or_null(ppp_version, "[0-9]{4}"),
-    is_string_or_null(version)
+    is_flag(fill_gaps),
+    is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
+    is_flag(additional_ind),
+    is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_string(version, null_ok = TRUE)
   )
   res <- pip(
     resource = "pip-grp",
@@ -177,9 +181,9 @@ pip_citation <- function(
     ppp_version <- as.character(ppp_version)
   }
   stopifnot(
-    is_string_or_null(release_version, "[0-9]{8}"),
-    is_string_or_null(ppp_version, "[0-9]{4}"),
-    is_string_or_null(version)
+    is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
+    is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_string(version, null_ok = TRUE)
   )
   res <- pip(
     resource = "citation",
@@ -199,10 +203,10 @@ pip_citation <- function(
 
 #' Return auxiliary data tables
 #'
+#' @param table (`NULL` | `character(1)`)\cr
+#'   Table to be returned. Default `NULL`.
 #' @inheritParams pip_data
-#' @param table (`character(1)`) table to be returned. Default `NULL`.
-#' @returns A `character()` with the available tables or a `data.frame()` containing the
-#'   table data.
+#' @returns A `character()` with the available tables or a `data.frame()` containing the table data.
 #' @inherit pip_data source
 #' @family poverty and inequality statistics
 #' @export
@@ -230,10 +234,10 @@ pip_aux <- function(
     ppp_version <- as.character(ppp_version)
   }
   stopifnot(
-    is_string_or_null(table),
-    is_string_or_null(release_version, "[0-9]{8}"),
-    is_string_or_null(ppp_version, "[0-9]{4}"),
-    is_string_or_null(version)
+    is_string(table, null_ok = TRUE),
+    is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
+    is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_string(version, null_ok = TRUE)
   )
   if (is.null(table)) {
     res <- pip(
@@ -254,16 +258,15 @@ pip_aux <- function(
       version = version,
       format = "csv"
     )
-    res <- clean_strings(res)
-    res
+    clean_strings(res)
   }
 }
 
 #' Return valid query parameters
 #'
 #' @inheritParams pip_data
-#' @param endpoint (`character(1)`) endpoint for which valid parameters are to be
-#'   returned. Default `"all"`.
+#' @param endpoint (`character(1)`)\cr
+#'   Endpoint for which valid parameters are to be returned. Default `"all"`.
 #' @returns A `data.frame()` with the valid parameters.
 #' @inherit pip_data source
 #' @family poverty and inequality statistics
@@ -282,9 +285,9 @@ pip_valid_params <- function(
     ppp_version <- as.character(ppp_version)
   }
   stopifnot(
-    is_string_or_null(release_version, "[0-9]{8}"),
-    is_string_or_null(ppp_version, "[0-9]{4}"),
-    is_string_or_null(version)
+    is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
+    is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_string(version, null_ok = TRUE)
   )
   endpoint <- match.arg(endpoint)
   res <- pip(
@@ -295,8 +298,7 @@ pip_valid_params <- function(
     version = version,
     format = "csv"
   )
-  res <- clean_strings(res)
-  res
+  clean_strings(res)
 }
 
 #' Return information about the API
@@ -331,9 +333,9 @@ pip_health_check <- function() {
 pip_error_body <- function(resp) {
   content_type <- resp_content_type(resp)
   if (identical(content_type, "application/json")) {
-    body <- resp_body_json(resp)
-    msg <- body$error[[1L]]
-    details <- body$details$msg[[1L]]
+    json <- resp_body_json(resp)
+    msg <- json$error[[1L]]
+    details <- json$details$msg[[1L]]
     details <- gsub("\\s+", " ", details)
     c(msg, details)
   }

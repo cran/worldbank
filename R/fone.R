@@ -1,10 +1,15 @@
 #' Return Finances One API Data
-#' @param dataset_id (`character(1)`) id of the associated dataset.
 #'
-#' @param resource_id (`character(1)`) id of the associated resource.
-#' @param view_id (`character(1)`) id of the view.
-#' @param ... (`any`) additional arguments passed to the request.
-#' @param limit (`integer(1)`) the maximum number of rows to return. Default is `NULL`.
+#' @param dataset_id (`character(1)`)\cr
+#'   The id of the associated dataset.
+#' @param resource_id (`character(1)`)\cr
+#'   Id of the associated resource.
+#' @param view_id (`character(1)`)\cr
+#'   The Id of the view.
+#' @param ... (`any`)\cr
+#'   Additional arguments passed to the request.
+#' @param limit (`NULL` | `integer(1)`)\cr
+#'   The maximum number of rows to return. Default is `NULL`.
 #'   If `NULL`, all rows are returned.
 #' @returns A `data.frame()` with the requested dataset.
 #' @source <https://financesone.worldbank.org/data>
@@ -19,7 +24,7 @@ fone_dataset <- function(dataset_id, resource_id, ..., limit = NULL) {
   stopifnot(
     is_string(dataset_id),
     is_string(resource_id),
-    is_count_or_null(limit)
+    is_count(limit, null_ok = TRUE)
   )
   fone(
     resource = "apiservice",
@@ -33,7 +38,7 @@ fone_dataset <- function(dataset_id, resource_id, ..., limit = NULL) {
 #' @rdname fone
 #' @export
 fone_view <- function(view_id, ..., limit = NULL) {
-  stopifnot(is_string(view_id), is_count_or_null(limit))
+  stopifnot(is_string(view_id), is_count(limit, null_ok = TRUE))
   fone(resource = "view", viewId = view_id, ..., limit = limit)
 }
 
