@@ -5,8 +5,6 @@
 
 <!-- badges: start -->
 
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![R-CMD-check](https://github.com/m-muecke/worldbank/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/m-muecke/worldbank/actions/workflows/R-CMD-check.yaml)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/worldbank)](https://CRAN.R-project.org/package=worldbank)
@@ -16,7 +14,7 @@ version](https://m-muecke.r-universe.dev/worldbank/badges/version)](https://m-mu
 
 ## Overview
 
-worlbank provides a simple interface to the following [World
+worldbank provides a simple interface to the following [World
 Bank](https://datahelpdesk.worldbank.org/knowledgebase/articles/889386-developer-information-overview)
 APIs:
 
@@ -93,7 +91,6 @@ str(country)
 #>  $ longitude         : num  -70 NA 69.2 NA NA ...
 #>  $ latitude          : num  12.5 NA 34.5 NA NA ...
 
-
 # search for specific indicator
 ind <- wb_indicator()
 ind <- subset(
@@ -126,9 +123,31 @@ str(gdp)
 #>  $ unit          : chr  NA NA NA NA ...
 #>  $ obs_status    : chr  NA NA NA NA ...
 #>  $ decimal       : int  0 0 0 0 0 0 0 0 0 0 ...
+
+# plot the indicator data
+library(ggplot2)
+
+subset(gdp, date >= 1980) |>
+  ggplot(aes(x = date, y = value, color = country_name)) +
+  geom_line() +
+  theme_minimal() +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold"),
+    panel.grid.major.y = element_line(color = "black", linewidth = 0.2),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text = element_text(color = "black"),
+    axis.title = element_blank()
+  ) +
+  scale_y_continuous(
+    labels = scales::label_currency(scale_cut = scales::cut_short_scale())
+  ) +
+  labs(title = "GDP in Current U.S. Dollars", color = "Country")
 ```
 
-<img src="man/figures/README-plotting-1.png" width="100%" />
+<img src="man/figures/README-demo-1.png" width="100%" />
 
 ## Related work
 

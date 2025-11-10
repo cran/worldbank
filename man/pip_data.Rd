@@ -64,9 +64,12 @@ A \code{data.frame()} with the requested statistics.
 Return main poverty and inequality statistics
 }
 \examples{
+\dontshow{if (httr2::is_online()) withAutoprint(\{ # examplesIf}
 \donttest{
-pip_data(c("ZAF", "ZMB"))
+data <- pip_data(c("ZAF", "ZMB"))
+head(data)
 }
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 Other poverty and inequality statistics: 

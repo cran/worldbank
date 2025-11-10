@@ -34,19 +34,24 @@ A \code{character()} with the available tables or a \code{data.frame()} containi
 Return auxiliary data tables
 }
 \examples{
+\dontshow{if (httr2::is_online()) withAutoprint(\{ # examplesIf}
 \donttest{
 # get a list of available tables
 pip_aux()
 
 # get countries
-pip_aux("countries")
+aux <- pip_aux("countries")
+head(aux)
 
 # get GDP
-pip_aux("gdp")
+aux <- pip_aux("gdp")
+head(aux)
 
 # get CPI
-pip_aux("cpi")
+aux <- pip_aux("cpi")
+head(aux)
 }
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 Other poverty and inequality statistics: 

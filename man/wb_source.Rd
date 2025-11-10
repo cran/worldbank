@@ -32,7 +32,10 @@ A \code{data.frame()} with the available sources. The columns are:
 List all sources supported by the World Bank API.
 }
 \examples{
-wb_source()
+\dontshow{if (httr2::is_online()) withAutoprint(\{ # examplesIf}
+src <- wb_source()
+head(src)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 Other indicators data: 

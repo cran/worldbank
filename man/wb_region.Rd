@@ -27,7 +27,10 @@ A \code{data.frame()} with the available regions. The columns are:
 List all regions supported by the World Bank API.
 }
 \examples{
-wb_region()
+\dontshow{if (httr2::is_online()) withAutoprint(\{ # examplesIf}
+region <- wb_region()
+head(region)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 Other indicators data: 

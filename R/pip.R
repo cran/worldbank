@@ -28,9 +28,10 @@
 #' @source <https://pip.worldbank.org/api>
 #' @family poverty and inequality statistics
 #' @export
-#' @examples
+#' @examplesIf httr2::is_online()
 #' \donttest{
-#' pip_data(c("ZAF", "ZMB"))
+#' data <- pip_data(c("ZAF", "ZMB"))
+#' head(data)
 #' }
 pip_data <- function(
   country = NULL,
@@ -90,9 +91,10 @@ pip_data <- function(
 #' @inherit pip_data source
 #' @family poverty and inequality statistics
 #' @export
-#' @examples
+#' @examplesIf httr2::is_online()
 #' \donttest{
-#' pip_group(c("AFE", "LAC"))
+#' grp <- pip_group(c("AFE", "LAC"))
+#' head(grp)
 #' }
 pip_group <- function(
   country = NULL,
@@ -152,9 +154,10 @@ pip_group <- function(
 #' @inherit pip_data source
 #' @family poverty and inequality statistics
 #' @export
-#' @examples
+#' @examplesIf httr2::is_online()
 #' \donttest{
-#' pip_versions()
+#' vers <- pip_versions()
+#' head(vers)
 #' }
 pip_versions <- function() {
   res <- pip("versions", format = "csv")
@@ -168,7 +171,7 @@ pip_versions <- function() {
 #' @inherit pip_data source
 #' @family poverty and inequality statistics
 #' @export
-#' @examples
+#' @examplesIf httr2::is_online()
 #' \donttest{
 #' pip_citation()
 #' }
@@ -210,19 +213,22 @@ pip_citation <- function(
 #' @inherit pip_data source
 #' @family poverty and inequality statistics
 #' @export
-#' @examples
+#' @examplesIf httr2::is_online()
 #' \donttest{
 #' # get a list of available tables
 #' pip_aux()
 #'
 #' # get countries
-#' pip_aux("countries")
+#' aux <- pip_aux("countries")
+#' head(aux)
 #'
 #' # get GDP
-#' pip_aux("gdp")
+#' aux <- pip_aux("gdp")
+#' head(aux)
 #'
 #' # get CPI
-#' pip_aux("cpi")
+#' aux <- pip_aux("cpi")
+#' head(aux)
 #' }
 pip_aux <- function(
   table = NULL,
@@ -271,9 +277,10 @@ pip_aux <- function(
 #' @inherit pip_data source
 #' @family poverty and inequality statistics
 #' @export
-#' @examples
+#' @examplesIf httr2::is_online()
 #' \donttest{
-#' pip_valid_params()
+#' params <- pip_valid_params()
+#' head(params)
 #' }
 pip_valid_params <- function(
   endpoint = c("all", "aux", "pip", "pip-grp", "pip-info", "valid-params"), # nolint
@@ -307,7 +314,7 @@ pip_valid_params <- function(
 #' @inherit pip_data source
 #' @family poverty and inequality statistics
 #' @export
-#' @examples
+#' @examplesIf httr2::is_online()
 #' \donttest{
 #' pip_info()
 #' }
@@ -321,7 +328,7 @@ pip_info <- function() {
 #' @inherit pip_data source
 #' @family poverty and inequality statistics
 #' @export
-#' @examples
+#' @examplesIf httr2::is_online()
 #' \donttest{
 #' pip_health_check()
 #' }
@@ -348,7 +355,9 @@ pip <- function(resource, ..., format = c("json", "csv", "xml", "rds")) {
     req_url_path_append(resource) |>
     req_error(body = pip_error_body) |>
     req_url_query(format = format, ...) |>
+    req_wb_cache() |>
     req_perform()
+
   body <- switch(
     format,
     json = resp_body_json(resp),

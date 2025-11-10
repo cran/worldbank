@@ -9,7 +9,7 @@
 #' @source <https://api.worldbank.org/v2/languages>
 #' @family indicators data
 #' @export
-#' @examples
+#' @examplesIf httr2::is_online()
 #' wb_language()
 wb_language <- function() {
   data <- worldbank(resource = "languages")
@@ -37,7 +37,7 @@ wb_language <- function() {
 #' @source <https://api.worldbank.org/v2/lendingTypes>
 #' @family indicators data
 #' @export
-#' @examples
+#' @examplesIf httr2::is_online()
 #' wb_lending_type()
 wb_lending_type <- function(type = NULL, lang = "en") {
   stopifnot(is_character(type, null_ok = TRUE), nchar(type) == 3L)
@@ -69,7 +69,7 @@ wb_lending_type <- function(type = NULL, lang = "en") {
 #' @source <https://api.worldbank.org/v2/incomeLevels>
 #' @family indicators data
 #' @export
-#' @examples
+#' @examplesIf httr2::is_online()
 #' wb_income_level()
 wb_income_level <- function(income = NULL, lang = "en") {
   stopifnot(is_character(income, null_ok = TRUE), nchar(income) == 3L)
@@ -107,8 +107,9 @@ wb_income_level <- function(income = NULL, lang = "en") {
 #' @source <https://api.worldbank.org/v2/sources>
 #' @family indicators data
 #' @export
-#' @examples
-#' wb_source()
+#' @examplesIf httr2::is_online()
+#' src <- wb_source()
+#' head(src)
 wb_source <- function(source = NULL, lang = "en") {
   stopifnot(is_character(source, null_ok = TRUE))
   source <- format_param(source)
@@ -145,8 +146,9 @@ wb_source <- function(source = NULL, lang = "en") {
 #' @source <https://api.worldbank.org/v2/topics>
 #' @family indicators data
 #' @export
-#' @examples
-#' wb_topic()
+#' @examplesIf httr2::is_online()
+#' topic <- wb_topic()
+#' head(topic)
 wb_topic <- function(topic = NULL, lang = "en") {
   stopifnot(is_character(topic, null_ok = TRUE))
   topic <- format_param(topic)
@@ -178,8 +180,9 @@ wb_topic <- function(topic = NULL, lang = "en") {
 #' @source <https://api.worldbank.org/v2/region>
 #' @family indicators data
 #' @export
-#' @examples
-#' wb_region()
+#' @examplesIf httr2::is_online()
+#' region <- wb_region()
+#' head(region)
 wb_region <- function(region = NULL, lang = "en") {
   stopifnot(
     is_character(region, null_ok = TRUE),
@@ -230,8 +233,9 @@ wb_region <- function(region = NULL, lang = "en") {
 #' @source <https://api.worldbank.org/v2/country>
 #' @family indicators data
 #' @export
-#' @examples
-#' wb_country()
+#' @examplesIf httr2::is_online()
+#' country <- wb_country()
+#' head(country)
 wb_country <- function(country = NULL, lang = "en") {
   stopifnot(
     is_character(country, null_ok = TRUE),
@@ -288,7 +292,7 @@ wb_country <- function(country = NULL, lang = "en") {
 #' @source <https://api.worldbank.org/v2/indicator>
 #' @family indicators data
 #' @export
-#' @examples
+#' @examplesIf httr2::is_online()
 #' wb_indicator("NY.GDP.MKTP.CD")
 wb_indicator <- function(indicator = NULL, lang = "en") {
   stopifnot(is_string(indicator, null_ok = TRUE))
@@ -356,16 +360,19 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
 #'   \item{decimal}{The decimal.}
 #' @source <https://api.worldbank.org/v2/country/{country}/indicator/{indicator}>
 #' @export
-#' @examples
-#' ind <- wb_country_indicator("NY.GDP.MKTP.CD", "US")
+#' @examplesIf httr2::is_online()
+#' # single indicator for a single country (all available years)
+#' ind <- wb_data("NY.GDP.MKTP.CD", "US")
 #' head(ind)
-#' ind <- wb_country_indicator(
+#'
+#' # multiple indicators for multiple countries (2015-2023)
+#' ind <- wb_data(
 #'   indicator = c("NY.GDP.MKTP.CD", "FP.CPI.TOTL.ZG"),
 #'   country = c("US", "DE", "FR", "CH", "JP"),
 #'   start_date = 2015, end_date = 2023
 #' )
 #' head(ind)
-wb_country_indicator <- function(
+wb_data <- function(
   indicator = "NY.GDP.MKTP.CD",
   country = NULL,
   lang = "en",
@@ -406,9 +413,9 @@ wb_country_indicator <- function(
   clean_strings(res)
 }
 
-#' @rdname wb_country_indicator
+#' @rdname wb_data
 #' @export
-wb_data <- wb_country_indicator
+wb_country_indicator <- wb_data
 
 parse_country_indicator <- function(data) {
   res <- map(data, function(x) {
@@ -432,6 +439,33 @@ parse_country_indicator <- function(data) {
   do.call(rbind, res)
 }
 
+worldbank <- function(resource, ..., lang = NULL, per_page = 32500L) {
+  stopifnot(is_string(lang, null_ok = TRUE), nchar(lang) == 2L)
+  json <- request("https://api.worldbank.org/v2") |>
+    req_user_agent("worldbank (https://m-muecke.github.io/worldbank)") |>
+    req_url_path_append(lang, resource) |>
+    req_url_query(..., format = "json", per_page = per_page) |>
+    req_error(is_error = is_wb_error, body = wb_error_body) |>
+    req_wb_cache() |>
+    req_perform() |>
+    resp_body_json()
+  json[[2L]]
+}
+
+worldbank_seq <- function(resource, resp_data, ..., lang = NULL, per_page = 32500L) {
+  stopifnot(is_string(lang, null_ok = TRUE), nchar(lang) == 2L)
+  req <- request("https://api.worldbank.org/v2") |>
+    req_user_agent("worldbank (https://m-muecke.github.io/worldbank)") |>
+    req_url_query(..., format = "json", per_page = per_page) |>
+    req_error(is_error = is_wb_error, body = wb_error_body) |>
+    req_wb_cache()
+
+  resource |>
+    map(\(x) req_url_path_append(req, lang, x)) |>
+    req_perform_sequential() |>
+    map(\(x) resp_body_json(x)[[2L]])
+}
+
 is_wb_error <- function(resp) {
   status <- resp_status(resp)
   if (status >= 400L) {
@@ -453,30 +487,4 @@ wb_error_body <- function(resp) {
     docs <- "Read more at <https://datahelpdesk.worldbank.org/knowledgebase/articles/898620-api-error-codes>" # nolint
     c(error_code, msg$value, docs)
   }
-}
-
-worldbank <- function(resource, ..., lang = NULL, per_page = 32500L) {
-  stopifnot(is_string(lang, null_ok = TRUE), nchar(lang) == 2L)
-  body <- request("https://api.worldbank.org/v2") |>
-    req_user_agent("worldbank (https://m-muecke.github.io/worldbank)") |>
-    req_url_path_append(lang, resource) |>
-    req_url_query(..., format = "json", per_page = per_page) |>
-    req_error(is_error = is_wb_error, body = wb_error_body) |>
-    req_perform() |>
-    resp_body_json()
-  body[[2L]]
-}
-
-worldbank_seq <- function(resource, resp_data, ..., lang = NULL, per_page = 32500L) {
-  stopifnot(is_string(lang, null_ok = TRUE), nchar(lang) == 2L)
-  req <- request("https://api.worldbank.org/v2") |>
-    req_user_agent("worldbank (https://m-muecke.github.io/worldbank)") |>
-    req_url_query(..., format = "json", per_page = per_page) |>
-    req_error(is_error = is_wb_error, body = wb_error_body)
-
-  res <- resource |>
-    map(\(x) req_url_path_append(req, lang, x)) |>
-    req_perform_sequential() |>
-    map(\(x) resp_body_json(x)[[2L]])
-  res
 }

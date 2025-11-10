@@ -16,9 +16,12 @@ A \code{data.frame()} with the available versions.
 Return the available data versions
 }
 \examples{
+\dontshow{if (httr2::is_online()) withAutoprint(\{ # examplesIf}
 \donttest{
-pip_versions()
+vers <- pip_versions()
+head(vers)
 }
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 Other poverty and inequality statistics: 
