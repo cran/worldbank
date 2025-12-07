@@ -1,3 +1,7 @@
+# worldbank 0.7.1
+
+* Don't cache queries in tests to comply with CRAN
+
 # worldbank 0.7.0
 
 * Added optional request caching to improve performance for repeated queries.
