@@ -13,6 +13,7 @@ pip_data(
   povline = 2.15,
   popshare = NULL,
   fill_gaps = FALSE,
+  nowcast = FALSE,
   welfare_type = c("all", "consumption", "income"),
   reporting_level = c("all", "national", "rural", "urban"),
   additional_ind = FALSE,
@@ -29,7 +30,7 @@ Countries for which statistics are to be computed, specified as ISO3 codes. Defa
 Years for which statistics are to be computed, specified as YYYY. Default \code{NULL}.}
 
 \item{povline}{(\code{numeric(1)})\cr
-Poverty line to be used to compute poverty mesures. Poverty lines are only accepted up to 3
+Poverty line to be used to compute poverty measures. Poverty lines are only accepted up to 3
 decimals. Default \code{2.15}.}
 
 \item{popshare}{(\code{NULL} | \code{numeric(1)})\cr
@@ -38,6 +39,9 @@ specified. Default \code{NULL}.}
 
 \item{fill_gaps}{(\code{logical(1)})\cr
 Whether to fill gaps in the data. Default \code{FALSE}.}
+
+\item{nowcast}{(\code{logical(1)})\cr
+Whether to include nowcast estimates. Requires \code{fill_gaps = TRUE}. Default \code{FALSE}.}
 
 \item{welfare_type}{(\code{character(1)})\cr
 Type of welfare measure to be used. Default \code{"all"}.}
@@ -75,6 +79,7 @@ head(data)
 Other poverty and inequality statistics: 
 \code{\link{pip_aux}()},
 \code{\link{pip_citation}()},
+\code{\link{pip_cp}()},
 \code{\link{pip_group}()},
 \code{\link{pip_health_check}()},
 \code{\link{pip_info}()},

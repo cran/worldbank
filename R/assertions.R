@@ -5,18 +5,28 @@ is_flag <- function(x, null_ok = FALSE) {
   is.logical(x) && length(x) == 1L && !is.na(x)
 }
 
-is_character <- function(x, null_ok = FALSE) {
+is_character <- function(x, n_chars = NULL, pattern = NULL, null_ok = FALSE) {
   if (null_ok && is.null(x)) {
     return(TRUE)
   }
-  is.character(x) && !anyNA(x) && length(x) > 0L
+  ok <- is.character(x) && !anyNA(x) && length(x) > 0L
+  if (ok && !is.null(n_chars)) {
+    ok <- all(nchar(x) %in% n_chars)
+  }
+  if (ok && !is.null(pattern)) {
+    ok <- all(grepl(pattern, x))
+  }
+  ok
 }
 
-is_string <- function(x, ..., pattern = NULL, null_ok = FALSE) {
+is_string <- function(x, ..., n_chars = NULL, pattern = NULL, null_ok = FALSE) {
   if (null_ok && is.null(x)) {
     return(TRUE)
   }
   ok <- is.character(x) && length(x) == 1L && !is.na(x)
+  if (ok && !is.null(n_chars)) {
+    ok <- nchar(x) %in% n_chars
+  }
   if (ok && !is.null(pattern)) {
     ok <- grepl(pattern, x, ...)
   }
@@ -38,9 +48,5 @@ is_dateish <- function(x, null_ok = FALSE) {
     return(FALSE)
   }
   x <- as.character(x)
-  if (grepl("^\\d{4}(M(0[1-9]|1[0-2])|Q[1-4])?$", x)) {
-    TRUE
-  } else {
-    FALSE
-  }
+  grepl("^\\d{4}(M(0[1-9]|1[0-2])|Q[1-4])?$", x)
 }

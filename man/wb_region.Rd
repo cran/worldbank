@@ -11,17 +11,19 @@ wb_region(region = NULL, lang = "en")
 }
 \arguments{
 \item{region}{(\code{NULL} | \code{character()})\cr
-Region to query. Default \code{NULL}. If \code{NULL}, all regions are returned}
+Region to query. Default \code{NULL}. If \code{NULL}, all regions are returned.}
 
 \item{lang}{(\code{character(1)})\cr
 Language to query. Default \code{"en"}.}
 }
 \value{
 A \code{data.frame()} with the available regions. The columns are:
-\item{id}{The region ID.}
-\item{code}{The region code.}
-\item{iso2code}{The ISO 2 code of the region.}
-\item{name}{The region name.}
+\itemize{
+\item \code{id}: The region ID.
+\item \code{code}: The region code.
+\item \code{iso2code}: The ISO 2 code of the region.
+\item \code{name}: The region name.
+}
 }
 \description{
 List all regions supported by the World Bank API.

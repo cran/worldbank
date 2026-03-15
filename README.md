@@ -21,8 +21,9 @@ APIs:
 - [Indicators API
   v2](https://datahelpdesk.worldbank.org/knowledgebase/articles/889392-about-the-indicators-api-documentation)
 - [Poverty and Inequality Platform (PIP)
-  API](https://pip.worldbank.org/api).
+  API](https://pip.worldbank.org/api)
 - [Finances One API](https://financesone.worldbank.org)
+- [Projects API v2](https://search.worldbank.org/api/v2/projects)
 
 The main difference to other packages is that it’s a modern
 implementation using the [httr2](https://httr2.r-lib.org) package and
@@ -147,7 +148,7 @@ subset(gdp, date >= 1980) |>
   labs(title = "GDP in Current U.S. Dollars", color = "Country")
 ```
 
-<img src="man/figures/README-demo-1.png" width="100%" />
+<img src="man/figures/README-demo-1.png" alt="" width="100%" />
 
 ## Related work
 

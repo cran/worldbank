@@ -3,9 +3,9 @@
 #' List all languages supported by the World Bank API.
 #'
 #' @returns A `data.frame()` with the available languages. The columns are:
-#'   \item{code}{The language code.}
-#'   \item{name}{The language name.}
-#'   \item{native_form}{The native form of the language name.}
+#' * `code`: The language code.
+#' * `name`: The language name.
+#' * `native_form`: The native form of the language name.
 #' @source <https://api.worldbank.org/v2/languages>
 #' @family indicators data
 #' @export
@@ -33,9 +33,9 @@ wb_language <- function() {
 #' @param lang (`character(1)`)\cr
 #'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available lending types. The columns are:
-#'   \item{id}{The lending type ID.}
-#'   \item{iso2code}{The ISO 2 code of the lending type.}
-#'   \item{value}{The lending type value.}
+#' * `id`: The lending type ID.
+#' * `iso2code`: The ISO 2 code of the lending type.
+#' * `value`: The lending type value.
 #' @source <https://api.worldbank.org/v2/lendingTypes>
 #' @family indicators data
 #' @export
@@ -44,7 +44,7 @@ wb_language <- function() {
 #' wb_lending_type()
 #' }
 wb_lending_type <- function(type = NULL, lang = "en") {
-  stopifnot(is_character(type, null_ok = TRUE), nchar(type) == 3L)
+  stopifnot(is_character(type, null_ok = TRUE, n_chars = 3L))
   type <- format_param(type)
 
   resource <- sprintf("lendingType/%s", type)
@@ -67,9 +67,9 @@ wb_lending_type <- function(type = NULL, lang = "en") {
 #' @param lang (`character(1)`)\cr
 #'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available income levels. The columns are:
-#'   \item{id}{The income level ID.}
-#'   \item{iso2code}{The ISO 2 code of the income level.}
-#'   \item{value}{The income level value.}
+#' * `id`: The income level ID.
+#' * `iso2code`: The ISO 2 code of the income level.
+#' * `value`: The income level value.
 #' @source <https://api.worldbank.org/v2/incomeLevels>
 #' @family indicators data
 #' @export
@@ -78,7 +78,7 @@ wb_lending_type <- function(type = NULL, lang = "en") {
 #' wb_income_level()
 #' }
 wb_income_level <- function(income = NULL, lang = "en") {
-  stopifnot(is_character(income, null_ok = TRUE), nchar(income) == 3L)
+  stopifnot(is_character(income, null_ok = TRUE, n_chars = 3L))
   income <- format_param(income)
 
   resource <- sprintf("incomeLevel/%s", income)
@@ -101,15 +101,15 @@ wb_income_level <- function(income = NULL, lang = "en") {
 #' @param lang (`character(1)`)\cr
 #'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available sources. The columns are:
-#'   \item{id}{The source ID.}
-#'   \item{last_updated}{The date the source was last updated.}
-#'   \item{name}{The source name.}
-#'   \item{code}{The source code.}
-#'   \item{description}{The source description.}
-#'   \item{url}{The source URL.}
-#'   \item{data_availability}{Whether the source has data available.}
-#'   \item{metadata_availability}{Whether the source has metadata available.}
-#'   \item{concepts}{The concepts associated with the source.}
+#' * `id`: The source ID.
+#' * `last_updated`: The date the source was last updated.
+#' * `name`: The source name.
+#' * `code`: The source code.
+#' * `description`: The source description.
+#' * `url`: The source URL.
+#' * `data_availability`: Whether the source has data available.
+#' * `metadata_availability`: Whether the source has metadata available.
+#' * `concepts`: The concepts associated with the source.
 #' @source <https://api.worldbank.org/v2/sources>
 #' @family indicators data
 #' @export
@@ -125,15 +125,15 @@ wb_source <- function(source = NULL, lang = "en") {
   resource <- sprintf("source/%s", source)
   data <- worldbank(resource = resource, lang = lang)
   res <- data.frame(
-    id = data |> map_chr("id") |> as.integer(),
-    last_updated = data |> map_chr("lastupdated") |> as.Date(),
+    id = as.integer(map_chr(data, "id")),
+    last_updated = as.Date(map_chr(data, "lastupdated")),
     name = map_chr(data, "name"),
     code = map_chr(data, "code"),
     description = map_chr(data, "description"),
     url = map_chr(data, "url"),
-    data_availability = data |> map_chr("dataavailability") |> to_logical(),
-    metadata_availability = data |> map_chr("metadataavailability") |> to_logical(),
-    concepts = data |> map_chr("concepts") |> as.integer(),
+    data_availability = to_logical(map_chr(data, "dataavailability")),
+    metadata_availability = to_logical(map_chr(data, "metadataavailability")),
+    concepts = as.integer(map_chr(data, "concepts")),
     check.names = FALSE
   )
   clean_strings(res)
@@ -148,9 +148,9 @@ wb_source <- function(source = NULL, lang = "en") {
 #' @param lang (`character(1)`)\cr
 #'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available topics. The columns are:
-#'   \item{id}{The topic ID.}
-#'   \item{value}{The topic value.}
-#'   \item{source_note}{The source note.}
+#' * `id`: The topic ID.
+#' * `value`: The topic value.
+#' * `source_note`: The source note.
 #' @source <https://api.worldbank.org/v2/topics>
 #' @family indicators data
 #' @export
@@ -166,7 +166,7 @@ wb_topic <- function(topic = NULL, lang = "en") {
   resource <- sprintf("topic/%s", topic)
   data <- worldbank(resource = resource, lang = lang)
   res <- data.frame(
-    id = map_chr(data, "id") |> as.integer(),
+    id = as.integer(map_chr(data, "id")),
     value = map_chr(data, "value"),
     source_note = map_chr(data, "sourceNote"),
     check.names = FALSE
@@ -179,14 +179,14 @@ wb_topic <- function(topic = NULL, lang = "en") {
 #' List all regions supported by the World Bank API.
 #'
 #' @param region (`NULL` | `character()`)\cr
-#'   Region to query. Default `NULL`. If `NULL`, all regions are returned
+#'   Region to query. Default `NULL`. If `NULL`, all regions are returned.
 #' @param lang (`character(1)`)\cr
 #'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available regions. The columns are:
-#'   \item{id}{The region ID.}
-#'   \item{code}{The region code.}
-#'   \item{iso2code}{The ISO 2 code of the region.}
-#'   \item{name}{The region name.}
+#' * `id`: The region ID.
+#' * `code`: The region code.
+#' * `iso2code`: The ISO 2 code of the region.
+#' * `name`: The region name.
 #' @source <https://api.worldbank.org/v2/region>
 #' @family indicators data
 #' @export
@@ -198,15 +198,14 @@ wb_topic <- function(topic = NULL, lang = "en") {
 wb_region <- function(region = NULL, lang = "en") {
   stopifnot(
     is_character(region, null_ok = TRUE),
-    is_string(lang),
-    nchar(lang) == 2L
+    is_string(lang, n_chars = 2L)
   )
   region <- format_param(region)
 
   resource <- sprintf("%s/region/%s", lang, region)
   data <- worldbank(resource = resource)
   res <- data.frame(
-    id = data |> map_chr("id") |> na_if_empty() |> as.integer(),
+    id = as.integer(na_if_empty(map_chr(data, "id"))),
     code = map_chr(data, "code"),
     iso2code = map_chr(data, "iso2code"),
     name = map_chr(data, "name"),
@@ -224,24 +223,24 @@ wb_region <- function(region = NULL, lang = "en") {
 #' @param lang (`character(1)`)\cr
 #'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available countries. The columns are:
-#'   \item{country_id}{The country ID.}
-#'   \item{country_code}{The country code.}
-#'   \item{country_name}{The country name.}
-#'   \item{region_id}{The region ID.}
-#'   \item{region_code}{The region code.}
-#'   \item{region_value}{The region value.}
-#'   \item{admin_region_id}{The admin region ID.}
-#'   \item{admin_region_code}{The admin region code.}
-#'   \item{admin_region_value}{The admin region value.}
-#'   \item{income_level_id}{The income level ID.}
-#'   \item{income_level_code}{The income level code.}
-#'   \item{income_level_value}{The income level value.}
-#'   \item{lending_type_id}{The lending type ID.}
-#'   \item{lending_type_code}{The lending type code.}
-#'   \item{lending_type_value}{The lending type value.}
-#'   \item{capital_city}{The capital city.}
-#'   \item{longitude}{The longitude.}
-#'   \item{latitude}{The latitude.}
+#' * `country_id`: The country ID.
+#' * `country_code`: The country code.
+#' * `country_name`: The country name.
+#' * `region_id`: The region ID.
+#' * `region_code`: The region code.
+#' * `region_value`: The region value.
+#' * `admin_region_id`: The admin region ID.
+#' * `admin_region_code`: The admin region code.
+#' * `admin_region_value`: The admin region value.
+#' * `income_level_id`: The income level ID.
+#' * `income_level_code`: The income level code.
+#' * `income_level_value`: The income level value.
+#' * `lending_type_id`: The lending type ID.
+#' * `lending_type_code`: The lending type code.
+#' * `lending_type_value`: The lending type value.
+#' * `capital_city`: The capital city.
+#' * `longitude`: The longitude.
+#' * `latitude`: The latitude.
 #' @source <https://api.worldbank.org/v2/country>
 #' @family indicators data
 #' @export
@@ -252,10 +251,8 @@ wb_region <- function(region = NULL, lang = "en") {
 #' }
 wb_country <- function(country = NULL, lang = "en") {
   stopifnot(
-    is_character(country, null_ok = TRUE),
-    nchar(country) %in% 2:3,
-    is_string(lang),
-    nchar(lang) == 2L
+    is_character(country, null_ok = TRUE, n_chars = 2:3),
+    is_string(lang, n_chars = 2L)
   )
   country <- tolower(format_param(country))
 
@@ -278,8 +275,8 @@ wb_country <- function(country = NULL, lang = "en") {
     lending_type_code = map_chr(data, \(x) x$lendingType$iso2code),
     lending_type_value = map_chr(data, \(x) x$lendingType$value),
     capital_city = map_chr(data, "capitalCity"),
-    longitude = data |> map_chr("longitude") |> na_if_empty() |> as.numeric(),
-    latitude = data |> map_chr("latitude") |> na_if_empty() |> as.numeric(),
+    longitude = as.numeric(na_if_empty(map_chr(data, "longitude"))),
+    latitude = as.numeric(na_if_empty(map_chr(data, "latitude"))),
     check.names = FALSE
   )
   clean_strings(res)
@@ -294,15 +291,15 @@ wb_country <- function(country = NULL, lang = "en") {
 #' @param lang (`character(1)`)\cr
 #'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available indicators. The columns are:
-#'   \item{id}{The indicator ID.}
-#'   \item{name}{The indicator name.}
-#'   \item{unit}{The indicator unit.}
-#'   \item{source_id}{The source ID.}
-#'   \item{source_value}{The source value.}
-#'   \item{source_note}{The source note.}
-#'   \item{source_organization}{The source organization.}
-#'   \item{topic_id}{The topic ID.}
-#'   \item{topic_value}{The topic value.}
+#' * `id`: The indicator ID.
+#' * `name`: The indicator name.
+#' * `unit`: The indicator unit.
+#' * `source_id`: The source ID.
+#' * `source_value`: The source value.
+#' * `source_note`: The source note.
+#' * `source_organization`: The source organization.
+#' * `topic_id`: The topic ID.
+#' * `topic_value`: The topic value.
 #' @source <https://api.worldbank.org/v2/indicator>
 #' @family indicators data
 #' @export
@@ -320,19 +317,17 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
     id = map_chr(data, "id"),
     name = map_chr(data, "name"),
     unit = map_chr(data, "unit"),
-    source_id = data |> map_chr(\(x) x$source$id) |> as.integer(),
+    source_id = as.integer(map_chr(data, \(x) x$source$id)),
     source_value = map_chr(data, \(x) x$source$value),
     source_note = map_chr(data, "sourceNote"),
     source_organization = map_chr(data, "sourceOrganization"),
-    topic_id = data |> # nolint
-      map_chr(function(x) {
-        if (length(x$topics) > 0L && length(x$topics[[1L]]) > 0L) {
-          x$topics[[1L]]$id
-        } else {
-          NA_character_
-        }
-      }) |>
-      as.integer(),
+    topic_id = as.integer(map_chr(data, function(x) {
+      if (length(x$topics) > 0L && length(x$topics[[1L]]) > 0L) {
+        x$topics[[1L]]$id
+      } else {
+        NA_character_
+      }
+    })),
     topic_value = map_chr(data, function(x) {
       if (length(x$topics) > 0L && length(x$topics[[1L]]) > 0L) {
         x$topics[[1L]]$value
@@ -362,18 +357,23 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
 #'   * YYYYM\[1-12\] for monthly data (e.g. `"2020M02"`)
 #' @param end_date (`NULL` | `character(1)` | `integer(1)`)\cr
 #'   End date to query, in the same format as start_date. Default `NULL`.
+#' @param mrv (`NULL` | `integer(1)`)\cr
+#'   Most recent values to return. An alternative to `start_date`/`end_date`. Default `NULL`.
+#' @param gapfill (`logical(1)`)\cr
+#'   Whether to fill missing values by carrying forward the last available value. Only used when
+#'   `mrv` is set. Default `FALSE`.
 #' @returns A `data.frame()` with the available country indicators.
 #'   The columns are:
-#'   \item{date}{The date}
-#'   \item{indicator_id}{The indicator ID.}
-#'   \item{indicator_name}{The indicator name.}
-#'   \item{country_id}{The country ID.}
-#'   \item{country_name}{The country name.}
-#'   \item{country_code}{The country code.}
-#'   \item{value}{The indicator value.}
-#'   \item{unit}{The indicator unit.}
-#'   \item{obs_status}{The observation status.}
-#'   \item{decimal}{The decimal.}
+#' * `date`: The date
+#' * `indicator_id`: The indicator ID.
+#' * `indicator_name`: The indicator name.
+#' * `country_id`: The country ID.
+#' * `country_name`: The country name.
+#' * `country_code`: The country code.
+#' * `value`: The indicator value.
+#' * `unit`: The indicator unit.
+#' * `obs_status`: The observation status.
+#' * `decimal`: The decimal.
 #' @source <https://api.worldbank.org/v2/country/{country}/indicator/{indicator}>
 #' @export
 #' @examplesIf httr2::is_online()
@@ -395,30 +395,46 @@ wb_data <- function(
   country = NULL,
   lang = "en",
   start_date = NULL,
-  end_date = NULL
+  end_date = NULL,
+  mrv = NULL,
+  gapfill = FALSE
 ) {
   stopifnot(
     is_character(indicator),
-    is_character(country, null_ok = TRUE),
-    nchar(country) %in% 2:3,
+    is_character(country, null_ok = TRUE, n_chars = 2:3),
     is_dateish(start_date, null_ok = TRUE),
-    is_dateish(end_date, null_ok = TRUE)
+    is_dateish(end_date, null_ok = TRUE),
+    is_count(mrv, null_ok = TRUE),
+    is_flag(gapfill)
   )
   has_start_date <- !is.null(start_date)
   has_end_date <- !is.null(end_date)
   if (has_start_date && has_end_date && start_date > end_date) {
     stop("`start_date` must be earlier than `end_date`.", call. = FALSE)
   }
+  if (!is.null(mrv) && (has_start_date || has_end_date)) {
+    stop("`mrv` cannot be used together with `start_date`/`end_date`.", call. = FALSE)
+  }
+  if (gapfill && is.null(mrv)) {
+    stop("`gapfill = TRUE` requires `mrv` to be set.", call. = FALSE)
+  }
   indicator <- toupper(indicator)
   country <- tolower(format_param(country))
   date <- format_date(start_date, end_date)
+  gapfill <- if (gapfill) "Y" else NULL
 
   resource <- sprintf("country/%s/indicator/%s", country, indicator)
   if (length(resource) == 1L) {
-    res <- worldbank(resource = resource, lang = lang, date = date)
+    res <- worldbank(resource = resource, lang = lang, date = date, mrv = mrv, gapfill = gapfill)
     res <- parse_country_indicator(res)
   } else {
-    res <- worldbank_seq(resource = resource, lang = lang, date = date)
+    res <- worldbank_seq(
+      resource = resource,
+      lang = lang,
+      date = date,
+      mrv = mrv,
+      gapfill = gapfill
+    )
     res <- map(res, parse_country_indicator)
     res <- do.call(rbind, res)
   }
@@ -458,24 +474,26 @@ parse_country_indicator <- function(data) {
 }
 
 worldbank <- function(resource, ..., lang = NULL, per_page = 32500L) {
-  stopifnot(is_string(lang, null_ok = TRUE), nchar(lang) == 2L)
+  stopifnot(is_string(lang, null_ok = TRUE, n_chars = 2L))
   json <- request("https://api.worldbank.org/v2") |>
-    req_user_agent("worldbank (https://m-muecke.github.io/worldbank)") |>
+    req_user_agent(wb_user_agent()) |>
     req_url_path_append(lang, resource) |>
     req_url_query(..., format = "json", per_page = per_page) |>
     req_error(is_error = is_wb_error, body = wb_error_body) |>
+    req_wb_retry() |>
     req_wb_cache() |>
     req_perform() |>
     resp_body_json()
   json[[2L]]
 }
 
-worldbank_seq <- function(resource, resp_data, ..., lang = NULL, per_page = 32500L) {
-  stopifnot(is_string(lang, null_ok = TRUE), nchar(lang) == 2L)
+worldbank_seq <- function(resource, ..., lang = NULL, per_page = 32500L) {
+  stopifnot(is_string(lang, null_ok = TRUE, n_chars = 2L))
   req <- request("https://api.worldbank.org/v2") |>
-    req_user_agent("worldbank (https://m-muecke.github.io/worldbank)") |>
+    req_user_agent(wb_user_agent()) |>
     req_url_query(..., format = "json", per_page = per_page) |>
     req_error(is_error = is_wb_error, body = wb_error_body) |>
+    req_wb_retry() |>
     req_wb_cache()
 
   resource |>

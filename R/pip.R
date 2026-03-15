@@ -5,13 +5,15 @@
 #' @param year (`NULL` | `character()` | `numeric()`)\cr
 #'   Years for which statistics are to be computed, specified as YYYY. Default `NULL`.
 #' @param povline (`numeric(1)`)\cr
-#'   Poverty line to be used to compute poverty mesures. Poverty lines are only accepted up to 3
+#'   Poverty line to be used to compute poverty measures. Poverty lines are only accepted up to 3
 #'   decimals. Default `2.15`.
 #' @param popshare (`NULL` | `numeric(1)`)\cr
 #'   Proportion of the population living below the poverty line. Will be ignored if povline is
 #'   specified. Default `NULL`.
 #' @param fill_gaps (`logical(1)`)\cr
 #'   Whether to fill gaps in the data. Default `FALSE`.
+#' @param nowcast (`logical(1)`)\cr
+#'   Whether to include nowcast estimates. Requires `fill_gaps = TRUE`. Default `FALSE`.
 #' @param welfare_type (`character(1)`)\cr
 #'   Type of welfare measure to be used. Default `"all"`.
 #' @param reporting_level (`character(1)`)\cr
@@ -39,6 +41,7 @@ pip_data <- function(
   povline = 2.15,
   popshare = NULL,
   fill_gaps = FALSE,
+  nowcast = FALSE,
   welfare_type = c("all", "consumption", "income"),
   reporting_level = c("all", "national", "rural", "urban"),
   additional_ind = FALSE,
@@ -55,14 +58,18 @@ pip_data <- function(
     ppp_version <- as.character(ppp_version)
   }
   stopifnot(
-    is.null(country) || is_character(country) && all(nchar(country) == 3L),
-    is.null(year) || is_character(year) && all(grepl("[0-9]{4}", year)),
+    is_character(country, null_ok = TRUE, n_chars = 3L),
+    is_character(year, n_chars = 4L, pattern = "[0-9]{4}", null_ok = TRUE),
     is_flag(fill_gaps),
+    is_flag(nowcast),
     is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
     is_flag(additional_ind),
     is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
     is_string(version, null_ok = TRUE)
   )
+  if (nowcast && !fill_gaps) {
+    stop("`nowcast = TRUE` requires `fill_gaps = TRUE`.", call. = FALSE)
+  }
   res <- pip(
     resource = "pip",
     country = country,
@@ -70,9 +77,52 @@ pip_data <- function(
     povline = povline,
     popshare = popshare,
     fill_gaps = fill_gaps,
+    nowcast = nowcast,
     welfare_type = welfare_type,
     reporting_level = reporting_level,
     additional_ind = additional_ind,
+    release_version = release_version,
+    ppp_version = ppp_version,
+    version = version,
+    format = "csv",
+    .multi = "comma"
+  )
+  res
+}
+
+#' Return country profile data
+#'
+#' @inheritParams pip_data
+#' @returns A `data.frame()` with country profile statistics including headcount ratios, inequality
+#'   measures, and demographic breakdowns.
+#' @inherit pip_data source
+#' @family poverty and inequality statistics
+#' @export
+#' @examplesIf httr2::is_online()
+#' \donttest{
+#' cp <- pip_cp("ZAF")
+#' head(cp)
+#' }
+pip_cp <- function(
+  country = NULL,
+  povline = 2.15,
+  release_version = NULL,
+  ppp_version = NULL,
+  version = NULL
+) {
+  if (!is.null(ppp_version)) {
+    ppp_version <- as.character(ppp_version)
+  }
+  stopifnot(
+    is_character(country, null_ok = TRUE, n_chars = 3L),
+    is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
+    is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_string(version, null_ok = TRUE)
+  )
+  res <- pip(
+    resource = "cp-download",
+    country = country,
+    povline = povline,
     release_version = release_version,
     ppp_version = ppp_version,
     version = version,
@@ -120,8 +170,8 @@ pip_group <- function(
     ppp_version <- as.character(ppp_version)
   }
   stopifnot(
-    is.null(country) || is_character(country) && all(nchar(country) == 3L),
-    is.null(year) || is_character(year) && all(grepl("[0-9]{4}", year)),
+    is_character(country, null_ok = TRUE, n_chars = 3L),
+    is_character(year, n_chars = 4L, pattern = "[0-9]{4}", null_ok = TRUE),
     is_flag(fill_gaps),
     is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
     is_flag(additional_ind),
@@ -351,10 +401,11 @@ pip_error_body <- function(resp) {
 pip <- function(resource, ..., format = c("json", "csv", "xml", "rds")) {
   format <- match.arg(format)
   resp <- request("https://api.worldbank.org/pip/v1") |>
-    req_user_agent("worldbank (https://m-muecke.github.io/worldbank)") |>
+    req_user_agent(wb_user_agent()) |>
     req_url_path_append(resource) |>
     req_error(body = pip_error_body) |>
     req_url_query(format = format, ...) |>
+    req_wb_retry() |>
     req_wb_cache() |>
     req_perform()
 

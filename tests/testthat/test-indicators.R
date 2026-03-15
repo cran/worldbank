@@ -1,7 +1,3 @@
-has_ws <- function(x) {
-  any(!is.na(x) & (startsWith(x, " ") | endsWith(x, " ")))
-}
-
 test_that("wb_language", {
   local_mocked_bindings(
     worldbank = function(...) readRDS(test_path("fixtures", "wb-language.rds"))
@@ -234,10 +230,10 @@ test_that("wb_indicator input validation works", {
   expect_error(wb_indicator(TRUE))
   # lang should be two letter code
   expect_error(wb_indicator(lang = "a"))
-  expect_error(wb_indicaotr(lang = "abc"))
-  expect_error(wb_indicaotr(lang = c("a", "b")))
-  expect_error(wb_indicaotr(lang = TRUE))
-  expect_error(wb_indicaotr(lang = 1L))
+  expect_error(wb_indicator(lang = "abc"))
+  expect_error(wb_indicator(lang = c("a", "b")))
+  expect_error(wb_indicator(lang = TRUE))
+  expect_error(wb_indicator(lang = 1L))
 })
 
 test_that("wb_country_indicator input validation works", {
@@ -256,10 +252,18 @@ test_that("wb_country_indicator input validation works", {
   expect_error(wb_country_indicator(country = TRUE))
   # lang should be two letter code
   expect_error(wb_country_indicator(lang = "a"))
-  expect_error(wb_country_indicaotr(lang = "abc"))
-  expect_error(wb_country_indicaotr(lang = c("a", "b")))
-  expect_error(wb_country_indicaotr(lang = TRUE))
-  expect_error(wb_country_indicaotr(lang = 1L))
+  expect_error(wb_country_indicator(lang = "abc"))
+  expect_error(wb_country_indicator(lang = c("a", "b")))
+  expect_error(wb_country_indicator(lang = TRUE))
+  expect_error(wb_country_indicator(lang = 1L))
+})
+
+test_that("wb_data mrv and gapfill validation works", {
+  expect_error(wb_data(mrv = 3, start_date = 2020), "mrv")
+  expect_error(wb_data(mrv = 3, end_date = 2020), "mrv")
+  expect_error(wb_data(gapfill = TRUE), "gapfill")
+  expect_error(wb_data(mrv = -1))
+  expect_error(wb_data(mrv = "a"))
 })
 
 test_that("error parsing works", {
