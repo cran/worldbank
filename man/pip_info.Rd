@@ -10,7 +10,7 @@
 pip_info()
 }
 \value{
-A \code{data.frame()} with the API information.
+A \code{list()} with the API information.
 }
 \description{
 Return information about the API
@@ -23,14 +23,14 @@ pip_info()
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-Other poverty and inequality statistics: 
-\code{\link{pip_aux}()},
-\code{\link{pip_citation}()},
-\code{\link{pip_cp}()},
-\code{\link{pip_data}()},
-\code{\link{pip_group}()},
-\code{\link{pip_health_check}()},
-\code{\link{pip_valid_params}()},
-\code{\link{pip_versions}()}
+Other poverty and inequality statistics:
+\code{\link[=pip_aux]{pip_aux()}},
+\code{\link[=pip_citation]{pip_citation()}},
+\code{\link[=pip_cp]{pip_cp()}},
+\code{\link[=pip_data]{pip_data()}},
+\code{\link[=pip_group]{pip_group()}},
+\code{\link[=pip_health_check]{pip_health_check()}},
+\code{\link[=pip_valid_params]{pip_valid_params()}},
+\code{\link[=pip_versions]{pip_versions()}}
 }
 \concept{poverty and inequality statistics}

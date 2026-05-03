@@ -1,15 +1,15 @@
-#' Return Finances One API Data
+#' Return Finances One API data
 #'
 #' @param dataset_id (`character(1)`)\cr
-#'   The id of the associated dataset.
+#'   The ID of the associated dataset.
 #' @param resource_id (`character(1)`)\cr
-#'   Id of the associated resource.
+#'   The ID of the associated resource.
 #' @param view_id (`character(1)`)\cr
-#'   The Id of the view.
+#'   The ID of the view.
 #' @param ... (`any`)\cr
 #'   Additional arguments passed to the request.
 #' @param limit (`NULL` | `integer(1)`)\cr
-#'   The maximum number of rows to return. Default is `NULL`.
+#'   The maximum number of rows to return. Default `NULL`.
 #'   If `NULL`, all rows are returned.
 #' @returns A `data.frame()` with the requested dataset.
 #' @source <https://financesone.worldbank.org/data>
@@ -51,13 +51,10 @@ fone_view <- function(view_id, ..., limit = NULL) {
 fone <- function(resource, ..., limit = NULL) {
   max_reqs <- if (!is.null(limit)) ceiling(limit / 1000L) else Inf
 
-  req <- request("https://datacatalogapi.worldbank.org/dexapps/fone/api") |>
-    req_user_agent(wb_user_agent()) |>
+  req <- wb_request("https://datacatalogapi.worldbank.org/dexapps/fone/api") |>
     req_error(body = \(resp) resp_body_string(resp, "UTF-8")) |>
     req_url_path_append(resource) |>
-    req_url_query(top = limit, type = "csv", ...) |>
-    req_wb_retry() |>
-    req_wb_cache()
+    req_url_query(top = limit, type = "csv", ...)
 
   resps <- req_perform_iterative(
     req,

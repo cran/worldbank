@@ -29,7 +29,7 @@ wb_language <- function() {
 #' List all lending types supported by the World Bank API.
 #'
 #' @param type (`NULL` | `character()`)\cr
-#'   lending type to query. Default `NULL`. If `NULL`, all types are returned.
+#'   Lending type to query. Default `NULL`. If `NULL`, all types are returned.
 #' @param lang (`character(1)`)\cr
 #'   Language to query. Default `"en"`.
 #' @returns A `data.frame()` with the available lending types. The columns are:
@@ -321,23 +321,135 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
     source_value = map_chr(data, \(x) x$source$value),
     source_note = map_chr(data, "sourceNote"),
     source_organization = map_chr(data, "sourceOrganization"),
-    topic_id = as.integer(map_chr(data, function(x) {
-      if (length(x$topics) > 0L && length(x$topics[[1L]]) > 0L) {
-        x$topics[[1L]]$id
-      } else {
-        NA_character_
-      }
-    })),
-    topic_value = map_chr(data, function(x) {
-      if (length(x$topics) > 0L && length(x$topics[[1L]]) > 0L) {
-        x$topics[[1L]]$value
-      } else {
-        NA_character_
-      }
-    }),
+    topic_id = as.integer(map_chr(data, \(x) x$topics[1L][[1L]]$id %||% NA_character_)),
+    topic_value = map_chr(data, \(x) x$topics[1L][[1L]]$value %||% NA_character_),
     check.names = FALSE
   )
   clean_strings(res)
+}
+
+#' Search World Bank indicators
+#'
+#' Search the indicator catalog returned by [wb_indicator()] for a regular expression
+#' pattern across one or more text fields. By default the match is case insensitive.
+#'
+#' @param pattern (`character(1)`)\cr
+#'   Regular expression to match.
+#' @param fields (`character()`)\cr
+#'   Columns of the indicator catalog to search. Default `c("id", "name", "source_note")`.
+#' @param catalog (`NULL` | `data.frame()`)\cr
+#'   Optional pre-fetched indicator catalog. If `NULL` (default), [wb_indicator()] is called.
+#' @param lang (`character(1)`)\cr
+#'   Language to query. Only used when `catalog` is `NULL`. Default `"en"`.
+#' @param ignore.case (`logical(1)`)\cr
+#'   Whether the match should be case insensitive. Default `TRUE`.
+#' @param ... (`any`)\cr
+#'   Additional arguments passed to [grepl()].
+#' @returns A `data.frame()` with the matching rows of the indicator catalog.
+#' @source <https://api.worldbank.org/v2/indicator>
+#' @family indicators data
+#' @export
+#' @examplesIf httr2::is_online()
+#' \donttest{
+#' # search for indicators related to GDP
+#' wb_search("GDP")
+#'
+#' # restrict the search to the indicator name
+#' wb_search("unemployment", fields = "name")
+#'
+#' # case-sensitive fixed-string match
+#' wb_search("GDP", ignore.case = FALSE, fixed = TRUE)
+#' }
+wb_search <- function(
+  pattern,
+  fields = c("id", "name", "source_note"),
+  catalog = NULL,
+  lang = "en",
+  ignore.case = TRUE,
+  ...
+) {
+  stopifnot(
+    is_string(pattern),
+    is_character(fields),
+    is.null(catalog) || is.data.frame(catalog),
+    is_flag(ignore.case)
+  )
+  catalog <- catalog %||% wb_indicator(lang = lang)
+  missing_fields <- setdiff(fields, names(catalog))
+  if (length(missing_fields) > 0L) {
+    stop(
+      sprintf("`fields` not found in catalog: %s.", toString(missing_fields)),
+      call. = FALSE
+    )
+  }
+  hit <- lapply(fields, function(x) {
+    m <- grepl(pattern, catalog[[x]], ignore.case = ignore.case, ...)
+    m & !is.na(m)
+  })
+  hit <- Reduce(`|`, hit)
+  catalog[hit, , drop = FALSE]
+}
+
+#' World Bank WDI bulk download
+#'
+#' Download the entire World Development Indicators dataset as a single zip and return its
+#' contents as a list of data frames. Useful for full-dataset analyses where paginating
+#' through [wb_data()] would be slow, and for accessing footnote and series-time metadata
+#' that the API does not expose.
+#'
+#' The download is roughly 280 MB compressed and may take a minute or more.
+#'
+#' @param timeout (`integer(1)`)\cr
+#'   Maximum download time in seconds. Default `600`.
+#' @returns A named `list()` of `data.frame()`s:
+#' * `data`: indicator values in long format with columns `country_name`, `country_code`,
+#'   `indicator_name`, `indicator_code`, `year`, `value`.
+#' * `country`: country metadata.
+#' * `series`: series (indicator) metadata.
+#' * `country_series`: country-series-specific notes.
+#' * `series_time`: series-year-specific notes.
+#' * `footnote`: footnotes per country, series, and year.
+#' @source <https://databankfiles.worldbank.org/public/ddpext_download/WDI_CSV.zip>
+#' @family indicators data
+#' @export
+#' @examples
+#' \dontrun{
+#' wdi <- wb_bulk()
+#' head(wdi$data)
+#' }
+wb_bulk <- function(timeout = 600L) {
+  stopifnot(is_count(timeout))
+
+  td <- tempfile()
+  on.exit(unlink(td, recursive = TRUE), add = TRUE)
+  dir.create(td)
+  tf <- file.path(td, "WDI_CSV.zip")
+
+  wb_request("https://databankfiles.worldbank.org/public/ddpext_download/WDI_CSV.zip") |>
+    req_timeout(timeout) |>
+    req_perform(path = tf)
+
+  utils::unzip(tf, exdir = td)
+
+  read_csv <- function(name) {
+    df <- utils::read.csv(file.path(td, name), fileEncoding = "UTF-8-BOM")
+    names(df) <- to_snake_case(names(df))
+    df
+  }
+
+  # disambiguate the 2-letter ISO/WB codes from `country_code` (3-letter ISO).
+  country <- read_csv("WDICountry.csv")
+  names(country)[names(country) == "x2_alpha_code"] <- "iso2_code"
+  names(country)[names(country) == "wb_2_code"] <- "wb_iso2_code"
+
+  list(
+    data = wdi_pivot_long(read_csv("WDICSV.csv")),
+    country = country,
+    series = read_csv("WDISeries.csv"),
+    country_series = read_csv("WDIcountry-series.csv"),
+    series_time = read_csv("WDIseries-time.csv"),
+    footnote = read_csv("WDIfootnote.csv")
+  )
 }
 
 #' World Bank country indicator data
@@ -375,6 +487,7 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
 #' * `obs_status`: The observation status.
 #' * `decimal`: The decimal.
 #' @source <https://api.worldbank.org/v2/country/{country}/indicator/{indicator}>
+#' @family indicators data
 #' @export
 #' @examplesIf httr2::is_online()
 #' \donttest{
@@ -473,15 +586,29 @@ parse_country_indicator <- function(data) {
   do.call(rbind, res)
 }
 
+wdi_pivot_long <- function(data) {
+  data$x <- NULL
+  year_cols <- grep("^x[0-9]+$", names(data), value = TRUE)
+  years <- as.integer(sub("^x", "", year_cols))
+  n_years <- length(years)
+  n_rows <- nrow(data)
+  data.frame(
+    country_name = rep(data$country_name, n_years),
+    country_code = rep(data$country_code, n_years),
+    indicator_name = rep(data$indicator_name, n_years),
+    indicator_code = rep(data$indicator_code, n_years),
+    year = rep(years, each = n_rows),
+    value = unlist(data[, year_cols], use.names = FALSE),
+    check.names = FALSE
+  )
+}
+
 worldbank <- function(resource, ..., lang = NULL, per_page = 32500L) {
   stopifnot(is_string(lang, null_ok = TRUE, n_chars = 2L))
-  json <- request("https://api.worldbank.org/v2") |>
-    req_user_agent(wb_user_agent()) |>
+  json <- wb_request("https://api.worldbank.org/v2") |>
     req_url_path_append(lang, resource) |>
     req_url_query(..., format = "json", per_page = per_page) |>
     req_error(is_error = is_wb_error, body = wb_error_body) |>
-    req_wb_retry() |>
-    req_wb_cache() |>
     req_perform() |>
     resp_body_json()
   json[[2L]]
@@ -489,12 +616,9 @@ worldbank <- function(resource, ..., lang = NULL, per_page = 32500L) {
 
 worldbank_seq <- function(resource, ..., lang = NULL, per_page = 32500L) {
   stopifnot(is_string(lang, null_ok = TRUE, n_chars = 2L))
-  req <- request("https://api.worldbank.org/v2") |>
-    req_user_agent(wb_user_agent()) |>
+  req <- wb_request("https://api.worldbank.org/v2") |>
     req_url_query(..., format = "json", per_page = per_page) |>
-    req_error(is_error = is_wb_error, body = wb_error_body) |>
-    req_wb_retry() |>
-    req_wb_cache()
+    req_error(is_error = is_wb_error, body = wb_error_body)
 
   resource |>
     map(\(x) req_url_path_append(req, lang, x)) |>

@@ -34,7 +34,7 @@ Poverty line to be used to compute poverty measures. Poverty lines are only acce
 decimals. Default \code{2.15}.}
 
 \item{popshare}{(\code{NULL} | \code{numeric(1)})\cr
-Proportion of the population living below the poverty line. Will be ignored if povline is
+Proportion of the population living below the poverty line. Will be ignored if \code{povline} is
 specified. Default \code{NULL}.}
 
 \item{group_by}{(\code{character(1)})\cr
@@ -47,7 +47,7 @@ Whether to fill gaps in the data. Default \code{FALSE}.}
 Type of welfare measure to be used. Default \code{"all"}.}
 
 \item{reporting_level}{(\code{character(1)})\cr
-level of reporting for the statistics. Default \code{"all"}.}
+Level of reporting for the statistics. Default \code{"all"}.}
 
 \item{additional_ind}{(\code{logical(1)})\cr
 Whether to include additional indicators. Default \code{FALSE}.}
@@ -76,14 +76,14 @@ head(grp)
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-Other poverty and inequality statistics: 
-\code{\link{pip_aux}()},
-\code{\link{pip_citation}()},
-\code{\link{pip_cp}()},
-\code{\link{pip_data}()},
-\code{\link{pip_health_check}()},
-\code{\link{pip_info}()},
-\code{\link{pip_valid_params}()},
-\code{\link{pip_versions}()}
+Other poverty and inequality statistics:
+\code{\link[=pip_aux]{pip_aux()}},
+\code{\link[=pip_citation]{pip_citation()}},
+\code{\link[=pip_cp]{pip_cp()}},
+\code{\link[=pip_data]{pip_data()}},
+\code{\link[=pip_health_check]{pip_health_check()}},
+\code{\link[=pip_info]{pip_info()}},
+\code{\link[=pip_valid_params]{pip_valid_params()}},
+\code{\link[=pip_versions]{pip_versions()}}
 }
 \concept{poverty and inequality statistics}

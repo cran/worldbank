@@ -8,7 +8,7 @@
 #'   Poverty line to be used to compute poverty measures. Poverty lines are only accepted up to 3
 #'   decimals. Default `2.15`.
 #' @param popshare (`NULL` | `numeric(1)`)\cr
-#'   Proportion of the population living below the poverty line. Will be ignored if povline is
+#'   Proportion of the population living below the poverty line. Will be ignored if `povline` is
 #'   specified. Default `NULL`.
 #' @param fill_gaps (`logical(1)`)\cr
 #'   Whether to fill gaps in the data. Default `FALSE`.
@@ -17,7 +17,7 @@
 #' @param welfare_type (`character(1)`)\cr
 #'   Type of welfare measure to be used. Default `"all"`.
 #' @param reporting_level (`character(1)`)\cr
-#'   level of reporting for the statistics. Default `"all"`.
+#'   Level of reporting for the statistics. Default `"all"`.
 #' @param additional_ind (`logical(1)`)\cr
 #'   Whether to include additional indicators. Default `FALSE`.
 #' @param release_version (`NULL` | `character(1)`)\cr
@@ -259,7 +259,7 @@ pip_citation <- function(
 #' @param table (`NULL` | `character(1)`)\cr
 #'   Table to be returned. Default `NULL`.
 #' @inheritParams pip_data
-#' @returns A `character()` with the available tables or a `data.frame()` containing the table data.
+#' @returns A `character()` with the available tables, or a `data.frame()` with the table data.
 #' @inherit pip_data source
 #' @family poverty and inequality statistics
 #' @export
@@ -360,7 +360,7 @@ pip_valid_params <- function(
 
 #' Return information about the API
 #'
-#' @returns A `data.frame()` with the API information.
+#' @returns A `list()` with the API information.
 #' @inherit pip_data source
 #' @family poverty and inequality statistics
 #' @export
@@ -400,13 +400,10 @@ pip_error_body <- function(resp) {
 
 pip <- function(resource, ..., format = c("json", "csv", "xml", "rds")) {
   format <- match.arg(format)
-  resp <- request("https://api.worldbank.org/pip/v1") |>
-    req_user_agent(wb_user_agent()) |>
+  resp <- wb_request("https://api.worldbank.org/pip/v1") |>
     req_url_path_append(resource) |>
     req_error(body = pip_error_body) |>
     req_url_query(format = format, ...) |>
-    req_wb_retry() |>
-    req_wb_cache() |>
     req_perform()
 
   body <- switch(

@@ -220,9 +220,7 @@ test_that("wb_country input validation works", {
 })
 
 test_that("wb_indicator input validation works", {
-  # country should be a character vector with 2/3 letters or NULL
-  expect_error(wb_indicator("a"))
-  expect_error(wb_indicator("abcd"))
+  # indicator should be a string or NULL
   expect_error(wb_indicator(c("ab", "abcd")))
   expect_error(wb_indicator(character()))
   expect_error(wb_indicator(NA))
@@ -234,6 +232,86 @@ test_that("wb_indicator input validation works", {
   expect_error(wb_indicator(lang = c("a", "b")))
   expect_error(wb_indicator(lang = TRUE))
   expect_error(wb_indicator(lang = 1L))
+})
+
+test_that("wb_search filters indicators by pattern", {
+  indicators <- readRDS(test_path("fixtures", "wb-indicator.rds"))
+  local_mocked_bindings(
+    worldbank = function(...) indicators
+  )
+
+  catalog <- wb_indicator()
+
+  actual <- wb_search("HCount")
+  expect_s3_class(actual, "data.frame")
+  expect_identical(names(actual), names(catalog))
+  expect_true(nrow(actual) > 0L)
+  hit <- grepl("HCount", catalog$id, ignore.case = TRUE) |
+    grepl("HCount", catalog$name, ignore.case = TRUE) |
+    grepl("HCount", catalog$source_note, ignore.case = TRUE)
+  expect_identical(nrow(actual), sum(hit, na.rm = TRUE))
+
+  expect_identical(nrow(wb_search("zzz_no_match_zzz")), 0L)
+
+  expect_true(
+    nrow(wb_search("hcount")) >= nrow(wb_search("hcount", ignore.case = FALSE))
+  )
+
+  expect_identical(
+    wb_search("HCount", catalog = catalog),
+    wb_search("HCount")
+  )
+})
+
+test_that("wdi_pivot_long pivots wide WDI data to long format", {
+  wide <- data.frame(
+    country_name = c("Germany", "United States"),
+    country_code = c("DEU", "USA"),
+    indicator_name = c("GDP (current US$)", "GDP (current US$)"),
+    indicator_code = c("NY.GDP.MKTP.CD", "NY.GDP.MKTP.CD"),
+    x1960 = c(NA, 543300000000),
+    x1961 = c(NA, 563300000000),
+    x1962 = c(NA, 605100000000),
+    x = NA,
+    check.names = FALSE
+  )
+
+  long <- wdi_pivot_long(wide)
+  expect_s3_class(long, "data.frame")
+  expect_identical(
+    names(long),
+    c("country_name", "country_code", "indicator_name", "indicator_code", "year", "value")
+  )
+  expect_identical(nrow(long), 6L)
+  expect_identical(long$year, rep(1960:1962, each = 2L))
+  expect_identical(long$country_code, rep(c("DEU", "USA"), times = 3L))
+  expect_identical(
+    long$value,
+    c(NA, 543300000000, NA, 563300000000, NA, 605100000000)
+  )
+  expect_false("X" %in% names(long))
+})
+
+test_that("wb_bulk input validation works", {
+  expect_error(wb_bulk(timeout = -1))
+  expect_error(wb_bulk(timeout = "a"))
+  expect_error(wb_bulk(timeout = NA))
+  expect_error(wb_bulk(timeout = c(1, 2)))
+  expect_error(wb_bulk(timeout = NULL))
+})
+
+test_that("wb_search input validation works", {
+  catalog <- readRDS(test_path("fixtures", "wb-indicator.rds"))
+  local_mocked_bindings(
+    worldbank = function(...) catalog
+  )
+  expect_error(wb_search(NULL))
+  expect_error(wb_search(c("a", "b")))
+  expect_error(wb_search(NA))
+  expect_error(wb_search(1L))
+  expect_error(wb_search("GDP", fields = character()))
+  expect_error(wb_search("GDP", fields = "not_a_column"), "not_a_column")
+  expect_error(wb_search("GDP", catalog = list()))
 })
 
 test_that("wb_country_indicator input validation works", {

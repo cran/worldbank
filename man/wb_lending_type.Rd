@@ -11,7 +11,7 @@ wb_lending_type(type = NULL, lang = "en")
 }
 \arguments{
 \item{type}{(\code{NULL} | \code{character()})\cr
-lending type to query. Default \code{NULL}. If \code{NULL}, all types are returned.}
+Lending type to query. Default \code{NULL}. If \code{NULL}, all types are returned.}
 
 \item{lang}{(\code{character(1)})\cr
 Language to query. Default \code{"en"}.}
@@ -35,13 +35,16 @@ wb_lending_type()
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-Other indicators data: 
-\code{\link{wb_country}()},
-\code{\link{wb_income_level}()},
-\code{\link{wb_indicator}()},
-\code{\link{wb_language}()},
-\code{\link{wb_region}()},
-\code{\link{wb_source}()},
-\code{\link{wb_topic}()}
+Other indicators data:
+\code{\link[=wb_bulk]{wb_bulk()}},
+\code{\link[=wb_country]{wb_country()}},
+\code{\link[=wb_data]{wb_data()}},
+\code{\link[=wb_income_level]{wb_income_level()}},
+\code{\link[=wb_indicator]{wb_indicator()}},
+\code{\link[=wb_language]{wb_language()}},
+\code{\link[=wb_region]{wb_region()}},
+\code{\link[=wb_search]{wb_search()}},
+\code{\link[=wb_source]{wb_source()}},
+\code{\link[=wb_topic]{wb_topic()}}
 }
 \concept{indicators data}
