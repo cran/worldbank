@@ -51,12 +51,8 @@ pip_data <- function(
 ) {
   welfare_type <- match.arg(welfare_type)
   reporting_level <- match.arg(reporting_level)
-  if (!is.null(year)) {
-    year <- as.character(year)
-  }
-  if (!is.null(ppp_version)) {
-    ppp_version <- as.character(ppp_version)
-  }
+  year <- year %&&% as.character(year)
+  ppp_version <- ppp_version %&&% as.character(ppp_version)
   stopifnot(
     is_character(country, null_ok = TRUE, n_chars = 3L),
     is_character(year, n_chars = 4L, pattern = "[0-9]{4}", null_ok = TRUE),
@@ -70,7 +66,7 @@ pip_data <- function(
   if (nowcast && !fill_gaps) {
     stop("`nowcast = TRUE` requires `fill_gaps = TRUE`.", call. = FALSE)
   }
-  res <- pip(
+  pip(
     resource = "pip",
     country = country,
     year = year,
@@ -87,7 +83,6 @@ pip_data <- function(
     format = "csv",
     .multi = "comma"
   )
-  res
 }
 
 #' Return country profile data
@@ -110,16 +105,14 @@ pip_cp <- function(
   ppp_version = NULL,
   version = NULL
 ) {
-  if (!is.null(ppp_version)) {
-    ppp_version <- as.character(ppp_version)
-  }
+  ppp_version <- ppp_version %&&% as.character(ppp_version)
   stopifnot(
     is_character(country, null_ok = TRUE, n_chars = 3L),
     is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
     is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
     is_string(version, null_ok = TRUE)
   )
-  res <- pip(
+  pip(
     resource = "cp-download",
     country = country,
     povline = povline,
@@ -129,7 +122,6 @@ pip_cp <- function(
     format = "csv",
     .multi = "comma"
   )
-  res
 }
 
 #' Return aggregation of PIP statistics
@@ -163,12 +155,8 @@ pip_group <- function(
   group_by <- match.arg(group_by)
   welfare_type <- match.arg(welfare_type)
   reporting_level <- match.arg(reporting_level)
-  if (!is.null(year)) {
-    year <- as.character(year)
-  }
-  if (!is.null(ppp_version)) {
-    ppp_version <- as.character(ppp_version)
-  }
+  year <- year %&&% as.character(year)
+  ppp_version <- ppp_version %&&% as.character(ppp_version)
   stopifnot(
     is_character(country, null_ok = TRUE, n_chars = 3L),
     is_character(year, n_chars = 4L, pattern = "[0-9]{4}", null_ok = TRUE),
@@ -178,7 +166,7 @@ pip_group <- function(
     is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
     is_string(version, null_ok = TRUE)
   )
-  res <- pip(
+  pip(
     resource = "pip-grp",
     country = country,
     year = year,
@@ -195,7 +183,6 @@ pip_group <- function(
     format = "csv",
     .multi = "comma"
   )
-  res
 }
 
 #' Return the available data versions
@@ -210,8 +197,7 @@ pip_group <- function(
 #' head(vers)
 #' }
 pip_versions <- function() {
-  res <- pip("versions", format = "csv")
-  res
+  pip("versions", format = "csv")
 }
 
 #' Return citation for a given version
@@ -230,9 +216,7 @@ pip_citation <- function(
   ppp_version = NULL,
   version = NULL
 ) {
-  if (!is.null(ppp_version)) {
-    ppp_version <- as.character(ppp_version)
-  }
+  ppp_version <- ppp_version %&&% as.character(ppp_version)
   stopifnot(
     is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
     is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
@@ -245,13 +229,12 @@ pip_citation <- function(
     version = version,
     format = "json"
   )
-  res <- data.frame(
+  data.frame(
     citation = res$citation[[1L]],
     version = res$version[[1L]],
     date_accessed = res$date_accessed[[1L]],
     check.names = FALSE
   )
-  res
 }
 
 #' Return auxiliary data tables
@@ -286,9 +269,7 @@ pip_aux <- function(
   ppp_version = NULL,
   version = NULL
 ) {
-  if (!is.null(ppp_version)) {
-    ppp_version <- as.character(ppp_version)
-  }
+  ppp_version <- ppp_version %&&% as.character(ppp_version)
   stopifnot(
     is_string(table, null_ok = TRUE),
     is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
@@ -338,9 +319,7 @@ pip_valid_params <- function(
   ppp_version = NULL,
   version = NULL
 ) {
-  if (!is.null(ppp_version)) {
-    ppp_version <- as.character(ppp_version)
-  }
+  ppp_version <- ppp_version %&&% as.character(ppp_version)
   stopifnot(
     is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
     is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
@@ -406,15 +385,11 @@ pip <- function(resource, ..., format = c("json", "csv", "xml", "rds")) {
     req_url_query(format = format, ...) |>
     req_perform()
 
-  body <- switch(
+  switch(
     format,
     json = resp_body_json(resp),
-    csv = {
-      body <- resp_body_string(resp, "UTF-8")
-      utils::read.csv(textConnection(body, encoding = "UTF-8"))
-    },
+    csv = resp_body_csv(resp),
     xml = resp_body_xml(resp),
     rds = resp_body_raw(resp)
   )
-  body
 }

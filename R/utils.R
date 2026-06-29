@@ -1,5 +1,9 @@
-`%||%` <- function(x, y) {
-  if (is.null(x)) y else x # nolint
+`%||%` <- function(lhs, rhs) {
+  if (is.null(lhs)) rhs else lhs # nolint
+}
+
+`%&&%` <- function(lhs, rhs) {
+  if (is.null(lhs)) lhs else rhs
 }
 
 clean_strings <- function(data) {
@@ -35,15 +39,9 @@ format_param <- function(x) {
 }
 
 format_date <- function(start_date, end_date) {
-  has_start <- !is.null(start_date)
-  has_end <- !is.null(end_date)
-  if (has_start && has_end) {
+  if (!is.null(start_date) && !is.null(end_date)) {
     paste(start_date, end_date, sep = ":")
-  } else if (has_start) {
-    start_date
-  } else if (has_end) {
-    end_date
   } else {
-    NULL
+    start_date %||% end_date
   }
 }
