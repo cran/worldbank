@@ -116,6 +116,7 @@ test_that("wb_country_indicator", {
   actual <- wb_country_indicator()
   expect_s3_class(actual, "data.frame")
   expect_shape(actual, dim = c(63L, 10L))
+  expect_type(actual$date, "integer")
   for (x in actual) {
     if (is.character(x)) {
       expect_all_true(nzchar(x))
@@ -315,9 +316,8 @@ test_that("wb_search input validation works", {
 })
 
 test_that("wb_country_indicator input validation works", {
-  # indicator should be a string
+  # indicator should be a non-empty character vector
   expect_error(wb_country_indicator(indicator = NULL))
-  expect_error(wb_country_indicator(indicator = c("a", "b")))
   expect_error(wb_country_indicator(indicator = 1L))
   expect_error(wb_country_indicator(indicator = NA))
   # country should be a character vector with 2/3 letters or NULL
@@ -343,12 +343,76 @@ test_that("wb_data returns an empty data.frame when there are no observations", 
   expect_shape(actual, dim = c(0L, 10L))
 })
 
+test_that("wb_data preserves mixed-frequency dates as character", {
+  observation <- function(date, indicator) {
+    list(
+      date = date,
+      indicator = list(id = indicator, value = indicator),
+      country = list(id = "US", value = "United States"),
+      countryiso3code = "USA",
+      value = 1,
+      unit = "",
+      obs_status = "",
+      decimal = 0L
+    )
+  }
+  local_mocked_bindings(
+    worldbank_seq = function(resource, ...) {
+      lapply(resource, function(x) {
+        indicator <- sub(".*/", "", x)
+        date <- if (indicator == "ANNUAL") "2020" else "2020Q1"
+        list(observation(date, indicator))
+      })
+    }
+  )
+
+  actual <- wb_data(c("annual", "quarterly"), "US")
+  reversed <- wb_data(c("quarterly", "annual"), "US")
+
+  expect_identical(actual$date, c("2020", "2020Q1"))
+  expect_identical(reversed$date, c("2020Q1", "2020"))
+  expect_identical(wb_data(c("annual", "annual"), "US")$date, c(2020L, 2020L))
+  expect_identical(wb_data(c("quarterly", "quarterly"), "US")$date, c("2020Q1", "2020Q1"))
+})
+
+test_that("wb_data returns footnotes only when asked", {
+  captured <- NULL
+  local_mocked_bindings(
+    worldbank = function(...) {
+      captured <<- list(...)$footnote
+      list(wb_observation(footnote = "Based on data from LSMS."), wb_observation())
+    }
+  )
+
+  expect_false("footnote" %in% names(wb_data("SI.POV.DDAY", "ALB")))
+  expect_null(captured)
+
+  actual <- wb_data("SI.POV.DDAY", "ALB", footnote = TRUE)
+  expect_identical(captured, "Y")
+  expect_identical(actual$footnote, c("Based on data from LSMS.", NA))
+})
+
+test_that("wb_data returns footnotes for multiple indicators", {
+  local_mocked_bindings(
+    worldbank_seq = function(resource, ...) {
+      lapply(resource, function(x) {
+        indicator <- sub(".*/", "", x)
+        list(wb_observation(indicator, footnote = paste("note for", indicator)))
+      })
+    }
+  )
+  actual <- wb_data(c("a", "b"), "ALB", footnote = TRUE)
+  expect_identical(actual$footnote, c("note for A", "note for B"))
+})
+
 test_that("wb_data mrv and gapfill validation works", {
   expect_error(wb_data(mrv = 3, start_date = 2020), "mrv")
   expect_error(wb_data(mrv = 3, end_date = 2020), "mrv")
   expect_error(wb_data(gapfill = TRUE), "gapfill")
   expect_error(wb_data(mrv = -1))
   expect_error(wb_data(mrv = "a"))
+  expect_error(wb_data(footnote = "yes"))
+  expect_error(wb_data(footnote = NA))
 })
 
 test_that("error parsing works", {

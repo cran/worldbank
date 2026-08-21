@@ -4,12 +4,13 @@
 #'   Countries for which statistics are to be computed, specified as ISO3 codes. Default `NULL`.
 #' @param year (`NULL` | `character()` | `numeric()`)\cr
 #'   Years for which statistics are to be computed, specified as YYYY. Default `NULL`.
-#' @param povline (`numeric(1)`)\cr
-#'   Poverty line to be used to compute poverty measures. Poverty lines are only accepted up to 3
-#'   decimals. Default `2.15`.
+#' @param povline (`NULL` | `numeric(1)`)\cr
+#'   Poverty line to be used to compute poverty measures, between `0` and `2700`. Poverty lines
+#'   are only accepted up to 3 decimals. Default `2.15`.
 #' @param popshare (`NULL` | `numeric(1)`)\cr
-#'   Proportion of the population living below the poverty line. Will be ignored if `povline` is
-#'   specified. Default `NULL`.
+#'   Proportion of the population living below the poverty line, between `0` and `1`. Takes
+#'   precedence over `povline`: if both are supplied, the poverty line is derived from `popshare`.
+#'   Default `NULL`.
 #' @param fill_gaps (`logical(1)`)\cr
 #'   Whether to fill gaps in the data. Default `FALSE`.
 #' @param nowcast (`logical(1)`)\cr
@@ -20,10 +21,10 @@
 #'   Level of reporting for the statistics. Default `"all"`.
 #' @param additional_ind (`logical(1)`)\cr
 #'   Whether to include additional indicators. Default `FALSE`.
-#' @param release_version (`NULL` | `character(1)`)\cr
+#' @param release_version (`NULL` | `character(1)` | `numeric(1)`)\cr
 #'   Version of the data release in YYYYMMDD format. Default `NULL`.
 #' @param ppp_version (`NULL` | `character(1)` | `numeric(1)`)\cr
-#'   Version of the data. Default `NULL`.
+#'   Version of the data in YYYY format. Default `NULL`.
 #' @param version (`NULL` | `character(1)`)\cr
 #'   Version of the data. Default `NULL`.
 #' @returns A `data.frame()` with the requested statistics.
@@ -52,15 +53,16 @@ pip_data <- function(
   welfare_type <- match.arg(welfare_type)
   reporting_level <- match.arg(reporting_level)
   year <- year %&&% as.character(year)
-  ppp_version <- ppp_version %&&% as.character(ppp_version)
   stopifnot(
     is_character(country, null_ok = TRUE, n_chars = 3L),
     is_character(year, n_chars = 4L, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_number(povline, lower = 0, upper = 2700, null_ok = TRUE),
+    is_number(popshare, lower = 0, upper = 1, null_ok = TRUE),
     is_flag(fill_gaps),
     is_flag(nowcast),
-    is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
+    is_version(release_version, 8L, null_ok = TRUE),
     is_flag(additional_ind),
-    is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_version(ppp_version, 4L, null_ok = TRUE),
     is_string(version, null_ok = TRUE)
   )
   if (nowcast && !fill_gaps) {
@@ -105,11 +107,11 @@ pip_cp <- function(
   ppp_version = NULL,
   version = NULL
 ) {
-  ppp_version <- ppp_version %&&% as.character(ppp_version)
   stopifnot(
     is_character(country, null_ok = TRUE, n_chars = 3L),
-    is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
-    is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_number(povline, lower = 0, upper = 2700, null_ok = TRUE),
+    is_version(release_version, 8L, null_ok = TRUE),
+    is_version(ppp_version, 4L, null_ok = TRUE),
     is_string(version, null_ok = TRUE)
   )
   pip(
@@ -156,14 +158,15 @@ pip_group <- function(
   welfare_type <- match.arg(welfare_type)
   reporting_level <- match.arg(reporting_level)
   year <- year %&&% as.character(year)
-  ppp_version <- ppp_version %&&% as.character(ppp_version)
   stopifnot(
     is_character(country, null_ok = TRUE, n_chars = 3L),
     is_character(year, n_chars = 4L, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_number(povline, lower = 0, upper = 2700, null_ok = TRUE),
+    is_number(popshare, lower = 0, upper = 1, null_ok = TRUE),
     is_flag(fill_gaps),
-    is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
+    is_version(release_version, 8L, null_ok = TRUE),
     is_flag(additional_ind),
-    is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_version(ppp_version, 4L, null_ok = TRUE),
     is_string(version, null_ok = TRUE)
   )
   pip(
@@ -216,10 +219,9 @@ pip_citation <- function(
   ppp_version = NULL,
   version = NULL
 ) {
-  ppp_version <- ppp_version %&&% as.character(ppp_version)
   stopifnot(
-    is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
-    is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_version(release_version, 8L, null_ok = TRUE),
+    is_version(ppp_version, 4L, null_ok = TRUE),
     is_string(version, null_ok = TRUE)
   )
   res <- pip(
@@ -269,11 +271,10 @@ pip_aux <- function(
   ppp_version = NULL,
   version = NULL
 ) {
-  ppp_version <- ppp_version %&&% as.character(ppp_version)
   stopifnot(
     is_string(table, null_ok = TRUE),
-    is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
-    is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_version(release_version, 8L, null_ok = TRUE),
+    is_version(ppp_version, 4L, null_ok = TRUE),
     is_string(version, null_ok = TRUE)
   )
   if (is.null(table)) {
@@ -287,7 +288,7 @@ pip_aux <- function(
     )
     map_chr(res, "tables")
   } else {
-    res <- pip(
+    pip(
       resource = "aux",
       table = table,
       release_version = release_version,
@@ -295,7 +296,6 @@ pip_aux <- function(
       version = version,
       format = "csv"
     )
-    clean_strings(res)
   }
 }
 
@@ -319,14 +319,13 @@ pip_valid_params <- function(
   ppp_version = NULL,
   version = NULL
 ) {
-  ppp_version <- ppp_version %&&% as.character(ppp_version)
   stopifnot(
-    is_string(release_version, pattern = "[0-9]{8}", null_ok = TRUE),
-    is_string(ppp_version, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_version(release_version, 8L, null_ok = TRUE),
+    is_version(ppp_version, 4L, null_ok = TRUE),
     is_string(version, null_ok = TRUE)
   )
   endpoint <- match.arg(endpoint)
-  res <- pip(
+  pip(
     resource = "valid-params",
     endpoint = endpoint,
     release_version = release_version,
@@ -334,7 +333,6 @@ pip_valid_params <- function(
     version = version,
     format = "csv"
   )
-  clean_strings(res)
 }
 
 #' Return information about the API
@@ -388,7 +386,7 @@ pip <- function(resource, ..., format = c("json", "csv", "xml", "rds")) {
   switch(
     format,
     json = resp_body_json(resp),
-    csv = resp_body_csv(resp),
+    csv = clean_strings(resp_body_csv(resp)),
     xml = resp_body_xml(resp),
     rds = resp_body_raw(resp)
   )

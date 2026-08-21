@@ -8,8 +8,55 @@ test_that("pip_data basic checks", {
   expect_gt(nrow(res), 0L)
 })
 
+test_that("pip CSV responses are trimmed and blanks become NA", {
+  httr2::local_mocked_responses(function(req) {
+    httr2::response(
+      status_code = 200L,
+      url = req$url,
+      headers = list("content-type" = "text/csv"),
+      body = charToRaw("country_code,region,value\nZAF , ,1.5\nZMB,SSA,\n")
+    )
+  })
+
+  res <- pip_data("ZAF")
+  expect_equal(res$country_code, c("ZAF", "ZMB"))
+  expect_equal(res$region, c(NA, "SSA"))
+  expect_equal(res$value, c(1.5, NA))
+})
+
 test_that("pip_data nowcast requires fill_gaps", {
   expect_error(pip_data(nowcast = TRUE), "fill_gaps")
+})
+
+test_that("PIP poverty inputs require finite numeric scalars", {
+  invalid <- list("2.15", NA_real_, c(1, 2), Inf, TRUE)
+
+  for (x in invalid) {
+    expect_error(pip_data(povline = x))
+    expect_error(pip_data(povline = NULL, popshare = x))
+    expect_error(pip_cp(povline = x))
+    expect_error(pip_group(povline = x))
+    expect_error(pip_group(povline = NULL, popshare = x))
+  }
+})
+
+test_that("PIP poverty inputs must be within the range accepted by the API", {
+  expect_snapshot(error = TRUE, {
+    pip_data(povline = -1)
+    pip_data(povline = 2700.1)
+    pip_data(povline = NULL, popshare = 1.5)
+    pip_cp(povline = -1)
+    pip_group(povline = NULL, popshare = 50)
+  })
+})
+
+test_that("PIP version inputs reject values that are not 8 or 4 digits", {
+  expect_snapshot(error = TRUE, {
+    pip_data(release_version = "v20260324")
+    pip_data(ppp_version = "2017a")
+    pip_cp(release_version = 2026)
+    pip_group(ppp_version = 20170101)
+  })
 })
 
 test_that("pip_cp basic checks", {

@@ -37,7 +37,24 @@ is_count <- function(x, null_ok = FALSE) {
   if (null_ok && is.null(x)) {
     return(TRUE)
   }
-  is.numeric(x) && length(x) == 1L && is.finite(x) && as.integer(x) == x && x > 0L
+  is.numeric(x) && length(x) == 1L && is.finite(x) && trunc(x) == x && x > 0L
+}
+
+is_number <- function(x, lower = -Inf, upper = Inf, null_ok = FALSE) {
+  if (null_ok && is.null(x)) {
+    return(TRUE)
+  }
+  is.numeric(x) && length(x) == 1L && is.finite(x) && x >= lower && x <= upper
+}
+
+is_version <- function(x, n_digits, null_ok = FALSE) {
+  if (null_ok && is.null(x)) {
+    return(TRUE)
+  }
+  if (is_number(x)) {
+    x <- as.character(x)
+  }
+  is_string(x, n_chars = n_digits, pattern = "^[0-9]+$")
 }
 
 is_dateish <- function(x, null_ok = FALSE) {
