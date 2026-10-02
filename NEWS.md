@@ -1,3 +1,32 @@
+# worldbank 0.11.0
+
+## Breaking changes
+
+* `pip_cp()`, `pip_data()`, and `pip_group()` now default to `povline = NULL`, which uses the international poverty line of the requested `ppp_version` instead of the outdated `2.15`.
+* `wb_cache_delete()`, deprecated since worldbank 0.8.0, is now defunct. Use `wb_cache_clear()` instead.
+* `wb_indicator()` now returns every topic of an indicator in `topic_id` and `topic_value`, separated by `;`, instead of only the first. `topic_id` is now character, and comparisons such as `topic_value == "Health"` no longer match indicators with several topics. Use `grepl("(^|;)Health(;|$)", topic_value)` instead.
+
+## New features
+
+* Progress bars for slow paginated requests can now be turned off with `options(worldbank.progress = FALSE)`.
+* `wb_country()` gains `region`, `income_level`, and `lending_type` arguments to filter countries server-side instead of downloading the full list.
+* `wb_data()` gains an `mrnev` argument to return the most recent non-empty values for each country, even if they are from different years. Unlike `mrv`, it keeps countries without a value in the most recent year.
+* `wb_data()` gains a `source` argument to query a database other than the World Development Indicators, as listed by `wb_source()`.
+* New `wb_document()` searches the World Bank Documents & Reports archive by search term, country, document type, project, and date. Use `limit` to cap the number of documents returned, since broad queries can match hundreds of thousands of documents.
+* `wb_indicator()` and `wb_search()` gain a `source` argument to query indicators from a specific database, as listed by `wb_source()`.
+* `wb_project()` gains a `limit` argument to cap the number of projects returned.
+* `wb_project()` is now several times faster, since it only requests the fields it returns.
+
+## Bug fixes
+
+* Requests are now also retried on HTTP 502 and 504 responses, which the World Bank APIs return for temporary gateway failures.
+* `pip_data()` and `pip_group()` now accept `year = "all"` and `year = "MRV"`, which the PIP API supports, instead of only four-digit years.
+* `wb_bulk()` now trims whitespace and returns `NA` instead of `""` for empty fields.
+* `wb_data()` and the other Indicators API functions now fetch every page of results, instead of silently returning only the first 32,500 rows.
+* `wb_project()` no longer returns duplicated or missing projects for queries spanning several pages. Projects are now sorted by descending `id`.
+* `wb_project()` now errors when `start_date` is after `end_date`, instead of silently returning no projects.
+* `wb_search()` gains a `fixed` argument to match `pattern` as a literal string. As in `grepl()`, the match is case sensitive, but it no longer warns about `ignore.case`.
+
 # worldbank 0.10.0
 
 * The PIP functions now require `release_version` and `ppp_version` to be exactly 8 and 4 digits, given as a string or a number.

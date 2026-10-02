@@ -15,8 +15,10 @@ wb_data(
   start_date = NULL,
   end_date = NULL,
   mrv = NULL,
+  mrnev = NULL,
   gapfill = FALSE,
-  footnote = FALSE
+  footnote = FALSE,
+  source = NULL
 )
 
 wb_country_indicator(
@@ -26,8 +28,10 @@ wb_country_indicator(
   start_date = NULL,
   end_date = NULL,
   mrv = NULL,
+  mrnev = NULL,
   gapfill = FALSE,
-  footnote = FALSE
+  footnote = FALSE,
+  source = NULL
 )
 }
 \arguments{
@@ -54,6 +58,12 @@ End date to query, in the same format as start_date. Default \code{NULL}.}
 \item{mrv}{(\code{NULL} | \code{integer(1)})\cr
 Most recent values to return. An alternative to \code{start_date}/\code{end_date}. Default \code{NULL}.}
 
+\item{mrnev}{(\code{NULL} | \code{integer(1)})\cr
+Most recent non-empty values to return for each country. Unlike \code{mrv}, which returns the
+same most recent dates for every country and drops countries without a value for them, the
+dates can differ between countries. An alternative to \code{start_date}/\code{end_date} and \code{mrv}.
+Default \code{NULL}.}
+
 \item{gapfill}{(\code{logical(1)})\cr
 Whether to fill missing values by carrying forward the last available value. Only used when
 \code{mrv} is set. Default \code{FALSE}.}
@@ -61,6 +71,12 @@ Whether to fill missing values by carrying forward the last available value. Onl
 \item{footnote}{(\code{logical(1)})\cr
 Whether to return the footnotes published alongside the observations, such as uncertainty
 bounds or the survey a figure was derived from. Default \code{FALSE}.}
+
+\item{source}{(\code{NULL} | \code{integer(1)})\cr
+ID of the database to query, as listed by \code{\link[=wb_source]{wb_source()}}. Default \code{NULL}, which uses the
+World Development Indicators for indicators published there. Set this to get an indicator's
+values from another database, which can differ from those in the World Development
+Indicators.}
 }
 \value{
 A \code{data.frame()} with the available country indicators.
@@ -98,9 +114,17 @@ ind <- wb_data(
 )
 head(ind)
 
+# latest available poverty rate for each country, even if from different years
+ind <- wb_data("SI.POV.DDAY", c("ALB", "BRA", "IND"), mrnev = 1)
+ind[c("country_code", "date", "value")]
+
 # include the per-observation footnotes
 ind <- wb_data("SI.POV.DDAY", "ALB", footnote = TRUE)
 head(ind[c("date", "value", "footnote")])
+
+# GDP as archived in the Africa Development Indicators, which ends in 2011
+ind <- wb_data("NY.GDP.MKTP.CD", "ZAF", source = 11)
+head(ind)
 }
 \dontshow{\}) # examplesIf}
 }

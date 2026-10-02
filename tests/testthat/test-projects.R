@@ -1,21 +1,69 @@
 test_that("wb_project", {
   local_mocked_bindings(
-    projects = function(...) readRDS(test_path("fixtures", "wb-project.rds"))
+    projects = \(...) readRDS(test_path("fixtures", "wb-project.rds"))
   )
   actual <- wb_project(country = "BR", status = "active")
   expect_s3_class(actual, "data.frame")
   expect_shape(actual, dim = c(3L, 15L))
+  expect_identical(rownames(actual), c("1", "2", "3"))
   expect_type(actual$total_commitment, "double")
   expect_s3_class(actual$approval_date, "Date")
   expect_s3_class(actual$closing_date, "Date")
   for (x in actual) {
     if (is.character(x)) {
       expect_all_true(nzchar(x))
-      expect_false(has_ws(x))
+      expect_all_false(has_ws(x))
     }
   }
 })
 
+test_that("project_fields covers every field parse_projects reads", {
+  data <- readRDS(test_path("fixtures", "wb-project.rds"))
+  restricted <- lapply(data, \(x) x[intersect(names(x), project_fields)])
+  expect_identical(parse_projects(restricted), parse_projects(data))
+})
+
+test_that("projects stops paging once the total is reached", {
+  urls <- character()
+  httr2::local_mocked_responses(function(req) {
+    urls <<- c(urls, req$url)
+    httr2::response_json(body = list(total = "1500", projects = list(P1 = list(id = "P1"))))
+  })
+  expect_length(projects(), 2L)
+  expect_length(urls, 2L)
+})
+
+test_that("projects sorts by id so paging is stable", {
+  urls <- character()
+  httr2::local_mocked_responses(function(req) {
+    urls <<- c(urls, req$url)
+    httr2::response_json(body = list(total = "1500", projects = list(P1 = list(id = "P1"))))
+  })
+  projects()
+  expect_match(urls, "srt=id&order=desc", all = TRUE, fixed = TRUE)
+})
+
+test_that("wb_project limit caps results across pages", {
+  urls <- character()
+  data <- lapply(seq_len(1000L), \(i) list(id = paste0("P", i)))
+  names(data) <- paste0("P", seq_len(1000L))
+  httr2::local_mocked_responses(function(req) {
+    urls <<- c(urls, req$url)
+    httr2::response_json(body = list(projects = data))
+  })
+
+  actual <- wb_project(search = "climate", limit = 1500L)
+  expect_shape(actual, nrow = 1500L)
+  expect_length(urls, 2L)
+  expect_match(urls, "rows=1000", all = TRUE, fixed = TRUE)
+  expect_match(urls[[2L]], "os=1000", fixed = TRUE)
+
+  urls <- character()
+  actual <- wb_project(id = "P1", limit = 10L)
+  expect_shape(actual, nrow = 10L)
+  expect_length(urls, 1L)
+  expect_match(urls, "rows=10", fixed = TRUE)
+})
 
 test_that("wb_project input validation works", {
   expect_error(wb_project(id = 1L))
@@ -32,6 +80,15 @@ test_that("wb_project input validation works", {
   expect_error(wb_project(start_date = "2024"))
   expect_error(wb_project(start_date = "not-a-date"))
   expect_error(wb_project(end_date = "2024"))
+})
+
+test_that("wb_project rejects invalid limit", {
+  expect_snapshot(wb_project(limit = 0L), error = TRUE)
+  expect_snapshot(wb_project(limit = 1.5), error = TRUE)
+})
+
+test_that("wb_project rejects start_date after end_date", {
+  expect_snapshot(wb_project(start_date = "2024-12-31", end_date = "2024-01-01"), error = TRUE)
 })
 
 test_that("wb_project forwards status", {

@@ -14,7 +14,8 @@ wb_project(
   region = NULL,
   search = NULL,
   start_date = NULL,
-  end_date = NULL
+  end_date = NULL,
+  limit = NULL
 )
 }
 \arguments{
@@ -45,6 +46,11 @@ Board approval start date in \code{"YYYY-MM-DD"} format. Default \code{NULL}.}
 
 \item{end_date}{(\code{NULL} | \code{character(1)})\cr
 Board approval end date in \code{"YYYY-MM-DD"} format. Default \code{NULL}.}
+
+\item{limit}{(\code{NULL} | \code{integer(1)})\cr
+The maximum number of projects to return. Default \code{NULL}. If \code{NULL}, all matching projects are
+returned, which can take many requests for broad queries. Projects are returned in descending
+order of \code{id}, so the most recently created projects come first.}
 }
 \value{
 A \code{data.frame()} with World Bank project data. The columns are:
@@ -54,7 +60,7 @@ A \code{data.frame()} with World Bank project data. The columns are:
 \item \code{status}: The project status.
 \item \code{approval_date}: The board approval date.
 \item \code{closing_date}: The closing date.
-\item \code{country_code}: The ISO country code.
+\item \code{country_code}: The country code, or a regional code such as \code{"3A"} for multi-country projects.
 \item \code{country}: The country name.
 \item \code{region}: The region name.
 \item \code{total_commitment}: The total commitment amount in millions USD.
@@ -80,6 +86,9 @@ wb_project(country = c("BR", "IN"), status = c("active", "pipeline"))
 
 # look up specific projects
 wb_project(id = c("P163868", "P180429"))
+
+# the first 100 projects mentioning climate
+wb_project(search = "climate", limit = 100)
 }
 \dontshow{\}) # examplesIf}
 }

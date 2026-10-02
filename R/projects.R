@@ -23,13 +23,17 @@
 #'   Board approval start date in `"YYYY-MM-DD"` format. Default `NULL`.
 #' @param end_date (`NULL` | `character(1)`)\cr
 #'   Board approval end date in `"YYYY-MM-DD"` format. Default `NULL`.
+#' @param limit (`NULL` | `integer(1)`)\cr
+#'   The maximum number of projects to return. Default `NULL`. If `NULL`, all matching projects are
+#'   returned, which can take many requests for broad queries. Projects are returned in descending
+#'   order of `id`, so the most recently created projects come first.
 #' @returns A `data.frame()` with World Bank project data. The columns are:
 #' * `id`: The project ID.
 #' * `project_name`: The project name.
 #' * `status`: The project status.
 #' * `approval_date`: The board approval date.
 #' * `closing_date`: The closing date.
-#' * `country_code`: The ISO country code.
+#' * `country_code`: The country code, or a regional code such as `"3A"` for multi-country projects.
 #' * `country`: The country name.
 #' * `region`: The region name.
 #' * `total_commitment`: The total commitment amount in millions USD.
@@ -52,6 +56,9 @@
 #'
 #' # look up specific projects
 #' wb_project(id = c("P163868", "P180429"))
+#'
+#' # the first 100 projects mentioning climate
+#' wb_project(search = "climate", limit = 100)
 #' }
 wb_project <- function(
   id = NULL,
@@ -60,7 +67,8 @@ wb_project <- function(
   region = NULL,
   search = NULL,
   start_date = NULL,
-  end_date = NULL
+  end_date = NULL,
+  limit = NULL
 ) {
   stopifnot(
     is_character(id, null_ok = TRUE),
@@ -70,11 +78,16 @@ wb_project <- function(
     is_character(region, null_ok = TRUE),
     is_string(search, null_ok = TRUE),
     is_string(start_date, null_ok = TRUE, pattern = "^\\d{4}-\\d{2}-\\d{2}$"),
-    is_string(end_date, null_ok = TRUE, pattern = "^\\d{4}-\\d{2}-\\d{2}$")
+    is_string(end_date, null_ok = TRUE, pattern = "^\\d{4}-\\d{2}-\\d{2}$"),
+    is_count(limit, null_ok = TRUE)
   )
 
+  if (!is.null(start_date) && !is.null(end_date) && start_date > end_date) {
+    stop("`start_date` must be earlier than `end_date`.", call. = FALSE)
+  }
+
   if (!is.null(id)) {
-    data <- projects(id = collapse_or(id))
+    data <- projects(id = collapse_or(id), limit = limit)
   } else {
     data <- projects(
       countrycode_exact = collapse_or(toupper(country)),
@@ -82,22 +95,46 @@ wb_project <- function(
       regionname = collapse_or(region),
       qterm = search,
       strdate = start_date,
-      enddate = end_date
+      enddate = end_date,
+      limit = limit
     )
   }
   parse_projects(data)
 }
 
-collapse_or <- function(x) {
-  if (length(x) == 0L) {
-    return()
-  }
-  paste0(x, collapse = "^")
-}
+project_fields <- c(
+  "id",
+  "project_name",
+  "status",
+  "boardapprovaldate",
+  "closingdate",
+  "countrycode",
+  "countryshortname",
+  "regionname",
+  "curr_total_commitment",
+  "curr_ibrd_commitment",
+  "curr_ida_commitment",
+  "lendinginstr",
+  "borrower",
+  "impagency",
+  "url"
+)
 
-projects <- function(..., per_page = 1000L) {
+projects <- function(..., limit = NULL) {
+  per_page <- min(limit %||% 1000L, 1000L)
+  max_reqs <- if (!is.null(limit)) ceiling(limit / per_page) else Inf
+
+  # the default order by approval date has ties, so paging by offset repeats and skips projects
   req <- wb_request("https://search.worldbank.org/api/v2/projects") |>
-    req_url_query(..., format = "json", rows = per_page)
+    req_url_query(
+      ...,
+      format = "json",
+      rows = per_page,
+      fl = project_fields,
+      srt = "id",
+      order = "desc",
+      .multi = "comma"
+    )
 
   resps <- req_perform_iterative(
     req,
@@ -105,12 +142,18 @@ projects <- function(..., per_page = 1000L) {
       "os",
       start = 0L,
       offset = per_page,
+      resp_pages = \(resp) resp_total_pages(resp, per_page),
       resp_complete = \(resp) length(resp_body_json(resp)$projects) == 0L
     ),
-    max_reqs = Inf
+    max_reqs = max_reqs,
+    progress = wb_progress()
   )
 
-  resps_data(resps, \(resp) resp_body_json(resp)$projects)
+  data <- resps_data(resps, \(resp) unname(resp_body_json(resp)$projects))
+  if (!is.null(limit)) {
+    data <- utils::head(data, limit)
+  }
+  data
 }
 
 parse_projects <- function(data) {
@@ -120,10 +163,7 @@ parse_projects <- function(data) {
     status = map_chr(data, \(x) x$status %||% NA_character_),
     approval_date = map_chr(data, \(x) x$boardapprovaldate %||% NA_character_),
     closing_date = map_chr(data, \(x) x$closingdate %||% NA_character_),
-    country_code = map_chr(data, function(x) {
-      cc <- x$countrycode
-      if (is.null(cc)) NA_character_ else paste0(cc, collapse = ";")
-    }),
+    country_code = map_chr(data, \(x) unlist(x$countrycode) %||% NA_character_),
     country = map_chr(data, \(x) x$countryshortname %||% NA_character_),
     region = map_chr(data, \(x) x$regionname %||% NA_character_),
     total_commitment = as.numeric(map_chr(data, \(x) x$curr_total_commitment %||% NA_character_)),
@@ -133,8 +173,7 @@ parse_projects <- function(data) {
     borrower = map_chr(data, \(x) x$borrower %||% NA_character_),
     implementing_agency = map_chr(data, \(x) x$impagency %||% NA_character_),
     url = map_chr(data, \(x) x$url %||% NA_character_),
-    check.names = FALSE,
-    row.names = NULL
+    check.names = FALSE
   )
   res$approval_date <- as.Date(sub("T.*", "", res$approval_date))
   res$closing_date <- as.Date(res$closing_date, format = "%m/%d/%Y")

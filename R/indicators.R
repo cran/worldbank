@@ -44,7 +44,10 @@ wb_language <- function() {
 #' wb_lending_type()
 #' }
 wb_lending_type <- function(type = NULL, lang = "en") {
-  stopifnot(is_character(type, null_ok = TRUE, n_chars = 3L))
+  stopifnot(
+    is_character(type, null_ok = TRUE, n_chars = 3L),
+    is_string(lang, n_chars = 2L)
+  )
   type <- format_param(type)
 
   resource <- sprintf("lendingType/%s", type)
@@ -78,7 +81,10 @@ wb_lending_type <- function(type = NULL, lang = "en") {
 #' wb_income_level()
 #' }
 wb_income_level <- function(income = NULL, lang = "en") {
-  stopifnot(is_character(income, null_ok = TRUE, n_chars = 3L))
+  stopifnot(
+    is_character(income, null_ok = TRUE, n_chars = 3L),
+    is_string(lang, n_chars = 2L)
+  )
   income <- format_param(income)
 
   resource <- sprintf("incomeLevel/%s", income)
@@ -119,7 +125,10 @@ wb_income_level <- function(income = NULL, lang = "en") {
 #' head(src)
 #' }
 wb_source <- function(source = NULL, lang = "en") {
-  stopifnot(is_character(source, null_ok = TRUE))
+  stopifnot(
+    is_character(source, null_ok = TRUE),
+    is_string(lang, n_chars = 2L)
+  )
   source <- format_param(source)
 
   resource <- sprintf("source/%s", source)
@@ -160,7 +169,10 @@ wb_source <- function(source = NULL, lang = "en") {
 #' head(topic)
 #' }
 wb_topic <- function(topic = NULL, lang = "en") {
-  stopifnot(is_character(topic, null_ok = TRUE))
+  stopifnot(
+    is_character(topic, null_ok = TRUE),
+    is_string(lang, n_chars = 2L)
+  )
   topic <- format_param(topic)
 
   resource <- sprintf("topic/%s", topic)
@@ -202,8 +214,8 @@ wb_region <- function(region = NULL, lang = "en") {
   )
   region <- format_param(region)
 
-  resource <- sprintf("%s/region/%s", lang, region)
-  data <- worldbank(resource = resource)
+  resource <- sprintf("region/%s", region)
+  data <- worldbank(resource = resource, lang = lang)
   res <- data.frame(
     id = as.integer(na_if_empty(map_chr(data, "id"))),
     code = map_chr(data, "code"),
@@ -222,6 +234,12 @@ wb_region <- function(region = NULL, lang = "en") {
 #'   Country to query. Default `NULL`. If `NULL`, all countries are returned.
 #' @param lang (`character(1)`)\cr
 #'   Language to query. Default `"en"`.
+#' @param region (`NULL` | `character()`)\cr
+#'   Region codes to filter by, as listed in the `code` column of [wb_region()]. Default `NULL`.
+#' @param income_level (`NULL` | `character()`)\cr
+#'   Income level IDs to filter by, as listed by [wb_income_level()]. Default `NULL`.
+#' @param lending_type (`NULL` | `character()`)\cr
+#'   Lending type IDs to filter by, as listed by [wb_lending_type()]. Default `NULL`.
 #' @returns A `data.frame()` with the available countries. The columns are:
 #' * `country_id`: The country ID.
 #' * `country_code`: The country code.
@@ -248,16 +266,36 @@ wb_region <- function(region = NULL, lang = "en") {
 #' \donttest{
 #' country <- wb_country()
 #' head(country)
+#'
+#' # low income countries in Sub-Saharan Africa
+#' wb_country(region = "SSF", income_level = "LIC")
 #' }
-wb_country <- function(country = NULL, lang = "en") {
+wb_country <- function(
+  country = NULL,
+  lang = "en",
+  region = NULL,
+  income_level = NULL,
+  lending_type = NULL
+) {
   stopifnot(
     is_character(country, null_ok = TRUE, n_chars = 2:3),
-    is_string(lang, n_chars = 2L)
+    is_string(lang, n_chars = 2L),
+    is_character(region, null_ok = TRUE, n_chars = 3L),
+    is_character(income_level, null_ok = TRUE, n_chars = 3L),
+    is_character(lending_type, null_ok = TRUE, n_chars = 3L)
   )
   country <- tolower(format_param(country))
 
-  resource <- sprintf("%s/country/%s", lang, country)
-  data <- worldbank(resource = resource)
+  resource <- sprintf("country/%s", country)
+  data <- worldbank(
+    resource = resource,
+    lang = lang,
+    region = region,
+    incomeLevel = income_level,
+    lendingType = lending_type
+  )
+  # the API returns every country twice when filtering by lending type
+  data <- data[!duplicated(map_chr(data, "id"))]
   res <- data.frame(
     country_id = map_chr(data, "id"),
     country_code = map_chr(data, "iso2Code"),
@@ -290,7 +328,13 @@ wb_country <- function(country = NULL, lang = "en") {
 #'   Indicator to query. Default `NULL`. If `NULL`, all indicators are returned.
 #' @param lang (`character(1)`)\cr
 #'   Language to query. Default `"en"`.
-#' @returns A `data.frame()` with the available indicators. The columns are:
+#' @param source (`NULL` | `integer(1)`)\cr
+#'   ID of the source to query, as listed by [wb_source()]. Default `NULL`, which uses the API
+#'   default.
+#' @returns A `data.frame()` with the available indicators. Since an indicator can have several
+#'   topics, `topic_id` and `topic_value` hold all of them separated by `;`, which never occurs
+#'   within a value, or `NA` if there are none. Use `strsplit(x, ";")` to split them, or a pattern
+#'   such as `"(^|;)Health(;|$)"` to match a single topic exactly. The columns are:
 #' * `id`: The indicator ID.
 #' * `name`: The indicator name.
 #' * `unit`: The indicator unit.
@@ -298,21 +342,35 @@ wb_country <- function(country = NULL, lang = "en") {
 #' * `source_value`: The source value.
 #' * `source_note`: The source note.
 #' * `source_organization`: The source organization.
-#' * `topic_id`: The topic ID.
-#' * `topic_value`: The topic value.
+#' * `topic_id`: The topic IDs, as listed by [wb_topic()].
+#' * `topic_value`: The topic names, in the same order as `topic_id`.
 #' @source <https://api.worldbank.org/v2/indicator>
 #' @family indicators data
 #' @export
 #' @examplesIf httr2::is_online()
 #' \donttest{
 #' wb_indicator("NY.GDP.MKTP.CD")
+#'
+#' # an indicator can have several topics, separated by `;`
+#' ind <- wb_indicator("SE.ENR.PRSC.FM.ZS")
+#' ind[c("topic_id", "topic_value")]
+#' strsplit(ind$topic_value, ";")
 #' }
-wb_indicator <- function(indicator = NULL, lang = "en") {
-  stopifnot(is_string(indicator, null_ok = TRUE))
+wb_indicator <- function(indicator = NULL, lang = "en", source = NULL) {
+  stopifnot(
+    is_string(indicator, null_ok = TRUE),
+    is_string(lang, n_chars = 2L),
+    is_count(source, null_ok = TRUE)
+  )
   indicator <- format_param(indicator)
 
   resource <- sprintf("indicator/%s", indicator)
-  data <- worldbank(resource = resource, lang = lang)
+  data <- worldbank(resource = resource, lang = lang, source = source)
+  topics <- map(data, function(x) {
+    # the API returns `[{}]` for some indicators without topics
+    topics <- Filter(\(topic) !is.null(topic$id), x$topics)
+    topics[!duplicated(map_chr(topics, "id"))]
+  })
   res <- data.frame(
     id = map_chr(data, "id"),
     name = map_chr(data, "name"),
@@ -321,8 +379,11 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
     source_value = map_chr(data, \(x) x$source$value),
     source_note = map_chr(data, "sourceNote"),
     source_organization = map_chr(data, "sourceOrganization"),
-    topic_id = as.integer(map_chr(data, \(x) x$topics[1L][[1L]]$id %||% NA_character_)),
-    topic_value = map_chr(data, \(x) x$topics[1L][[1L]]$value %||% NA_character_),
+    topic_id = map_chr(topics, \(x) paste(map_chr(x, "id"), collapse = ";")),
+    topic_value = map_chr(topics, function(x) {
+      val <- trimws(map_chr(x, "value"))
+      if (any(nzchar(val))) paste(val, collapse = ";") else NA_character_
+    }),
     check.names = FALSE
   )
   clean_strings(res)
@@ -343,6 +404,11 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
 #'   Language to query. Only used when `catalog` is `NULL`. Default `"en"`.
 #' @param ignore.case (`logical(1)`)\cr
 #'   Whether the match should be case insensitive. Default `TRUE`.
+#' @param fixed (`logical(1)`)\cr
+#'   Whether to match `pattern` as a literal string. See [grepl()] for details. Default `FALSE`.
+#' @param source (`NULL` | `integer(1)`)\cr
+#'   ID of the source to query, as listed by [wb_source()]. Only used when `catalog` is `NULL`.
+#'   Default `NULL`, which uses the API default.
 #' @param ... (`any`)\cr
 #'   Additional arguments passed to [grepl()].
 #' @returns A `data.frame()` with the matching rows of the indicator catalog.
@@ -357,8 +423,11 @@ wb_indicator <- function(indicator = NULL, lang = "en") {
 #' # restrict the search to the indicator name
 #' wb_search("unemployment", fields = "name")
 #'
-#' # case-sensitive fixed-string match
-#' wb_search("GDP", ignore.case = FALSE, fixed = TRUE)
+#' # search the topics associated with each indicator
+#' wb_search("Climate Change", fields = "topic_value")
+#'
+#' # literal match
+#' wb_search("(% of GDP)", fixed = TRUE)
 #' }
 wb_search <- function(
   pattern,
@@ -366,22 +435,27 @@ wb_search <- function(
   catalog = NULL,
   lang = "en",
   ignore.case = TRUE,
+  fixed = FALSE,
+  source = NULL,
   ...
 ) {
   stopifnot(
     is_string(pattern),
     is_character(fields),
     is.null(catalog) || is.data.frame(catalog),
-    is_flag(ignore.case)
+    is_string(lang, n_chars = 2L),
+    is_flag(ignore.case),
+    is_flag(fixed),
+    is_count(source, null_ok = TRUE)
   )
-  catalog <- catalog %||% wb_indicator(lang = lang)
+  catalog <- catalog %||% wb_indicator(lang = lang, source = source)
   missing_fields <- setdiff(fields, names(catalog))
   if (length(missing_fields) > 0L) {
     stop(sprintf("`fields` not found in catalog: %s.", toString(missing_fields)), call. = FALSE)
   }
-  hit <- lapply(fields, function(x) {
-    m <- grepl(pattern, catalog[[x]], ignore.case = ignore.case, ...)
-    m & !is.na(m)
+  # grepl() warns that it ignores `ignore.case` for fixed patterns
+  hit <- lapply(fields, function(field) {
+    grepl(pattern, catalog[[field]], ignore.case = ignore.case && !fixed, fixed = fixed, ...)
   })
   hit <- Reduce(`|`, hit)
   res <- catalog[hit, , drop = FALSE]
@@ -429,15 +503,18 @@ wb_bulk <- function(timeout = 600L) {
     req_perform(path = tf)
 
   utils::unzip(tf, exdir = td)
+  read_wdi(td)
+}
 
+read_wdi <- function(dir) {
   read_csv <- function(name, na_strings = "NA") {
     data <- utils::read.csv(
-      file.path(td, name),
+      file.path(dir, name),
       fileEncoding = "UTF-8-BOM",
       na.strings = na_strings
     )
     names(data) <- to_snake_case(names(data))
-    data
+    clean_strings(data)
   }
 
   # `NA` is Namibia's ISO-2 code, not a missing-value sentinel. Only the code columns
@@ -475,12 +552,22 @@ wb_bulk <- function(timeout = 600L) {
 #'   End date to query, in the same format as start_date. Default `NULL`.
 #' @param mrv (`NULL` | `integer(1)`)\cr
 #'   Most recent values to return. An alternative to `start_date`/`end_date`. Default `NULL`.
+#' @param mrnev (`NULL` | `integer(1)`)\cr
+#'   Most recent non-empty values to return for each country. Unlike `mrv`, which returns the
+#'   same most recent dates for every country and drops countries without a value for them, the
+#'   dates can differ between countries. An alternative to `start_date`/`end_date` and `mrv`.
+#'   Default `NULL`.
 #' @param gapfill (`logical(1)`)\cr
 #'   Whether to fill missing values by carrying forward the last available value. Only used when
 #'   `mrv` is set. Default `FALSE`.
 #' @param footnote (`logical(1)`)\cr
 #'   Whether to return the footnotes published alongside the observations, such as uncertainty
 #'   bounds or the survey a figure was derived from. Default `FALSE`.
+#' @param source (`NULL` | `integer(1)`)\cr
+#'   ID of the database to query, as listed by [wb_source()]. Default `NULL`, which uses the
+#'   World Development Indicators for indicators published there. Set this to get an indicator's
+#'   values from another database, which can differ from those in the World Development
+#'   Indicators.
 #' @returns A `data.frame()` with the available country indicators.
 #'   The columns are:
 #' * `date`: The date. An integer if all observations are annual, otherwise a character vector.
@@ -512,9 +599,17 @@ wb_bulk <- function(timeout = 600L) {
 #' )
 #' head(ind)
 #'
+#' # latest available poverty rate for each country, even if from different years
+#' ind <- wb_data("SI.POV.DDAY", c("ALB", "BRA", "IND"), mrnev = 1)
+#' ind[c("country_code", "date", "value")]
+#'
 #' # include the per-observation footnotes
 #' ind <- wb_data("SI.POV.DDAY", "ALB", footnote = TRUE)
 #' head(ind[c("date", "value", "footnote")])
+#'
+#' # GDP as archived in the Africa Development Indicators, which ends in 2011
+#' ind <- wb_data("NY.GDP.MKTP.CD", "ZAF", source = 11)
+#' head(ind)
 #' }
 wb_data <- function(
   indicator = "NY.GDP.MKTP.CD",
@@ -523,17 +618,22 @@ wb_data <- function(
   start_date = NULL,
   end_date = NULL,
   mrv = NULL,
+  mrnev = NULL,
   gapfill = FALSE,
-  footnote = FALSE
+  footnote = FALSE,
+  source = NULL
 ) {
   stopifnot(
     is_character(indicator),
     is_character(country, null_ok = TRUE, n_chars = 2:3),
+    is_string(lang, n_chars = 2L),
     is_dateish(start_date, null_ok = TRUE),
     is_dateish(end_date, null_ok = TRUE),
     is_count(mrv, null_ok = TRUE),
+    is_count(mrnev, null_ok = TRUE),
     is_flag(gapfill),
-    is_flag(footnote)
+    is_flag(footnote),
+    is_count(source, null_ok = TRUE)
   )
   has_start_date <- !is.null(start_date)
   has_end_date <- !is.null(end_date)
@@ -543,37 +643,34 @@ wb_data <- function(
   if (!is.null(mrv) && (has_start_date || has_end_date)) {
     stop("`mrv` cannot be used together with `start_date`/`end_date`.", call. = FALSE)
   }
+  if (!is.null(mrnev) && (has_start_date || has_end_date)) {
+    stop("`mrnev` cannot be used together with `start_date`/`end_date`.", call. = FALSE)
+  }
+  if (!is.null(mrv) && !is.null(mrnev)) {
+    stop("`mrv` and `mrnev` cannot be used together.", call. = FALSE)
+  }
   if (gapfill && is.null(mrv)) {
     stop("`gapfill = TRUE` requires `mrv` to be set.", call. = FALSE)
   }
   indicator <- toupper(indicator)
   country <- tolower(format_param(country))
   date <- format_date(start_date, end_date)
-  gapfill <- if (gapfill) "Y" else NULL
 
   resource <- sprintf("country/%s/indicator/%s", country, indicator)
-  if (length(resource) == 1L) {
-    res <- worldbank(
-      resource = resource,
+  res <- map(resource, function(x) {
+    data <- worldbank(
+      resource = x,
       lang = lang,
       date = date,
       mrv = mrv,
-      gapfill = gapfill,
-      footnote = if (footnote) "Y"
+      mrnev = mrnev,
+      gapfill = if (gapfill) "Y",
+      footnote = if (footnote) "Y",
+      source = source
     )
-    res <- parse_country_indicator(res, footnote = footnote)
-  } else {
-    res <- worldbank_seq(
-      resource = resource,
-      lang = lang,
-      date = date,
-      mrv = mrv,
-      gapfill = gapfill,
-      footnote = if (footnote) "Y"
-    )
-    res <- map(res, parse_country_indicator, footnote = footnote)
-    res <- do.call(rbind, res)
-  }
+    parse_country_indicator(data, footnote = footnote)
+  })
+  res <- do.call(rbind, res)
   if (nrow(res) == 0L) {
     return(res)
   }
@@ -597,11 +694,14 @@ parse_country_indicator <- function(data, footnote = FALSE) {
     country_name = map_chr(data, \(x) x$country$value),
     country_code = map_chr(data, "countryiso3code"),
     value = map_dbl(data, "value"),
-    unit = map_chr(data, "unit"),
+    unit = map_chr(data, \(x) x$unit %||% NA_character_),
     obs_status = map_chr(data, "obs_status"),
     decimal = map_int(data, "decimal"),
     check.names = FALSE
   )
+  # some sources leave `countryiso3code` empty and put the ISO3 code in `country$id`
+  missing <- !nzchar(res$country_code) & nchar(res$country_id) == 3L
+  res$country_code[missing] <- res$country_id[missing]
   if (footnote) {
     res$footnote <- map_chr(data, \(x) x$footnote %||% NA_character_)
   }
@@ -626,38 +726,34 @@ wdi_pivot_long <- function(data) {
 }
 
 worldbank <- function(resource, ..., lang = NULL, per_page = 32500L) {
-  stopifnot(is_string(lang, null_ok = TRUE, n_chars = 2L))
-  json <- wb_request("https://api.worldbank.org/v2") |>
-    req_url_path_append(lang, resource) |>
-    req_url_query(..., format = "json", per_page = per_page) |>
-    req_error(is_error = is_wb_error, body = wb_error_body) |>
-    req_perform() |>
-    resp_body_json()
-  json[[2L]]
-}
-
-worldbank_seq <- function(resource, ..., lang = NULL, per_page = 32500L) {
-  stopifnot(is_string(lang, null_ok = TRUE, n_chars = 2L))
   req <- wb_request("https://api.worldbank.org/v2") |>
-    req_url_query(..., format = "json", per_page = per_page) |>
+    req_url_path_append(lang, resource) |>
+    req_url_query(
+      ...,
+      format = "json",
+      per_page = per_page,
+      .multi = \(x) paste0(x, collapse = ";")
+    ) |>
     req_error(is_error = is_wb_error, body = wb_error_body)
 
-  resource |>
-    map(\(x) req_url_path_append(req, lang, x)) |>
-    req_perform_sequential() |>
-    map(\(x) resp_body_json(x)[[2L]])
+  resps <- req_perform_iterative(
+    req,
+    next_req = iterate_with_offset(
+      "page",
+      resp_pages = \(resp) max(as.integer(resp_body_json(resp)[[1L]]$pages), 1L)
+    ),
+    max_reqs = Inf,
+    progress = wb_progress()
+  )
+  resps_data(resps, \(resp) resp_body_json(resp)[[2L]])
 }
 
 is_wb_error <- function(resp) {
-  status <- resp_status(resp)
-  if (status >= 400L) {
+  if (resp_status(resp) >= 400L) {
     return(TRUE)
   }
   json <- resp_body_json(resp)
-  if (length(json) == 1L && length(json[[1L]]$message) == 1L) {
-    return(TRUE)
-  }
-  FALSE
+  length(json) == 1L && length(json[[1L]]$message) >= 1L
 }
 
 wb_error_body <- function(resp) {

@@ -24,6 +24,7 @@ APIs:
   API](https://pip.worldbank.org/api)
 - [Finances One API](https://financesone.worldbank.org)
 - [Projects API v2](https://search.worldbank.org/api/v2/projects)
+- [Documents & Reports API v3](https://search.worldbank.org/api/v3/wds)
 
 The main difference to other packages is that it’s a modern
 implementation using the [httr2](https://httr2.r-lib.org) package and
@@ -104,8 +105,8 @@ str(ind)
 #>  $ source_value       : chr  "World Development Indicators" "World Developmen"..
 #>  $ source_note        : chr  "Total trade in services includes services provi"..
 #>  $ source_organization: chr  "Balance of Payments Statistics Yearbook and dat"..
-#>  $ topic_id           : int  3 3 3 3 3 7 7 5 5 5 ...
-#>  $ topic_value        : chr  "Economy & Growth" "Economy & Growth" "Economy &"..
+#>  $ topic_id           : chr  "3;12;21" "3;7" "3" "3;7;19" ...
+#>  $ topic_value        : chr  "Economy & Growth;Private Sector;Trade" "Economy"..
 
 # fetch indicator data for specific or all countries (default)
 gdp <- wb_data("NY.GDP.MKTP.CD", c("US", "DE", "FR", "CH", "JP"))

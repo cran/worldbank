@@ -37,7 +37,7 @@ is_count <- function(x, null_ok = FALSE) {
   if (null_ok && is.null(x)) {
     return(TRUE)
   }
-  is.numeric(x) && length(x) == 1L && is.finite(x) && trunc(x) == x && x > 0L
+  is.numeric(x) && length(x) == 1L && is.finite(x) && x == trunc(x) && x > 0L
 }
 
 is_number <- function(x, lower = -Inf, upper = Inf, null_ok = FALSE) {
@@ -55,6 +55,17 @@ is_version <- function(x, n_digits, null_ok = FALSE) {
     x <- as.character(x)
   }
   is_string(x, n_chars = n_digits, pattern = "^[0-9]+$")
+}
+
+is_pip_year <- function(x, null_ok = FALSE) {
+  if (null_ok && is.null(x)) {
+    return(TRUE)
+  }
+  if (is.numeric(x)) {
+    x <- as.character(x)
+  }
+  is_character(x, pattern = "^[0-9]{4}$") ||
+    is_string(x, pattern = "^(all|mrv)$", ignore.case = TRUE)
 }
 
 is_dateish <- function(x, null_ok = FALSE) {

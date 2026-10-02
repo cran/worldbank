@@ -7,7 +7,7 @@
 \url{https://api.worldbank.org/v2/indicator}
 }
 \usage{
-wb_indicator(indicator = NULL, lang = "en")
+wb_indicator(indicator = NULL, lang = "en", source = NULL)
 }
 \arguments{
 \item{indicator}{(\code{NULL} | \code{character(1)})\cr
@@ -15,9 +15,16 @@ Indicator to query. Default \code{NULL}. If \code{NULL}, all indicators are retu
 
 \item{lang}{(\code{character(1)})\cr
 Language to query. Default \code{"en"}.}
+
+\item{source}{(\code{NULL} | \code{integer(1)})\cr
+ID of the source to query, as listed by \code{\link[=wb_source]{wb_source()}}. Default \code{NULL}, which uses the API
+default.}
 }
 \value{
-A \code{data.frame()} with the available indicators. The columns are:
+A \code{data.frame()} with the available indicators. Since an indicator can have several
+topics, \code{topic_id} and \code{topic_value} hold all of them separated by \verb{;}, which never occurs
+within a value, or \code{NA} if there are none. Use \code{strsplit(x, ";")} to split them, or a pattern
+such as \code{"(^|;)Health(;|$)"} to match a single topic exactly. The columns are:
 \itemize{
 \item \code{id}: The indicator ID.
 \item \code{name}: The indicator name.
@@ -26,8 +33,8 @@ A \code{data.frame()} with the available indicators. The columns are:
 \item \code{source_value}: The source value.
 \item \code{source_note}: The source note.
 \item \code{source_organization}: The source organization.
-\item \code{topic_id}: The topic ID.
-\item \code{topic_value}: The topic value.
+\item \code{topic_id}: The topic IDs, as listed by \code{\link[=wb_topic]{wb_topic()}}.
+\item \code{topic_value}: The topic names, in the same order as \code{topic_id}.
 }
 }
 \description{
@@ -37,6 +44,11 @@ List all indicators supported by the World Bank API.
 \dontshow{if (httr2::is_online()) withAutoprint(\{ # examplesIf}
 \donttest{
 wb_indicator("NY.GDP.MKTP.CD")
+
+# an indicator can have several topics, separated by `;`
+ind <- wb_indicator("SE.ENR.PRSC.FM.ZS")
+ind[c("topic_id", "topic_value")]
+strsplit(ind$topic_value, ";")
 }
 \dontshow{\}) # examplesIf}
 }

@@ -3,10 +3,13 @@
 #' @param country (`NULL` | `character()`)\cr
 #'   Countries for which statistics are to be computed, specified as ISO3 codes. Default `NULL`.
 #' @param year (`NULL` | `character()` | `numeric()`)\cr
-#'   Years for which statistics are to be computed, specified as YYYY. Default `NULL`.
+#'   Years for which statistics are to be computed, specified as YYYY, or `"all"` for every
+#'   available year or `"MRV"` for the most recent year. Default `NULL`, which returns every
+#'   available year.
 #' @param povline (`NULL` | `numeric(1)`)\cr
 #'   Poverty line to be used to compute poverty measures, between `0` and `2700`. Poverty lines
-#'   are only accepted up to 3 decimals. Default `2.15`.
+#'   are only accepted up to 3 decimals. Default `NULL`, which uses the international poverty
+#'   line of the requested `ppp_version`, e.g. `3` for 2021 PPPs and `2.15` for 2017 PPPs.
 #' @param popshare (`NULL` | `numeric(1)`)\cr
 #'   Proportion of the population living below the poverty line, between `0` and `1`. Takes
 #'   precedence over `povline`: if both are supplied, the poverty line is derived from `popshare`.
@@ -39,7 +42,7 @@
 pip_data <- function(
   country = NULL,
   year = NULL,
-  povline = 2.15,
+  povline = NULL,
   popshare = NULL,
   fill_gaps = FALSE,
   nowcast = FALSE,
@@ -52,10 +55,9 @@ pip_data <- function(
 ) {
   welfare_type <- match.arg(welfare_type)
   reporting_level <- match.arg(reporting_level)
-  year <- year %&&% as.character(year)
   stopifnot(
     is_character(country, null_ok = TRUE, n_chars = 3L),
-    is_character(year, n_chars = 4L, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_pip_year(year, null_ok = TRUE),
     is_number(povline, lower = 0, upper = 2700, null_ok = TRUE),
     is_number(popshare, lower = 0, upper = 1, null_ok = TRUE),
     is_flag(fill_gaps),
@@ -102,7 +104,7 @@ pip_data <- function(
 #' }
 pip_cp <- function(
   country = NULL,
-  povline = 2.15,
+  povline = NULL,
   release_version = NULL,
   ppp_version = NULL,
   version = NULL
@@ -143,7 +145,7 @@ pip_cp <- function(
 pip_group <- function(
   country = NULL,
   year = NULL,
-  povline = 2.15,
+  povline = NULL,
   popshare = NULL,
   group_by = c("wb", "none"),
   fill_gaps = FALSE,
@@ -157,10 +159,9 @@ pip_group <- function(
   group_by <- match.arg(group_by)
   welfare_type <- match.arg(welfare_type)
   reporting_level <- match.arg(reporting_level)
-  year <- year %&&% as.character(year)
   stopifnot(
     is_character(country, null_ok = TRUE, n_chars = 3L),
-    is_character(year, n_chars = 4L, pattern = "[0-9]{4}", null_ok = TRUE),
+    is_pip_year(year, null_ok = TRUE),
     is_number(povline, lower = 0, upper = 2700, null_ok = TRUE),
     is_number(popshare, lower = 0, upper = 1, null_ok = TRUE),
     is_flag(fill_gaps),
@@ -277,26 +278,16 @@ pip_aux <- function(
     is_version(ppp_version, 4L, null_ok = TRUE),
     is_string(version, null_ok = TRUE)
   )
-  if (is.null(table)) {
-    res <- pip(
-      resource = "aux",
-      table = table,
-      release_version = release_version,
-      ppp_version = ppp_version,
-      version = version,
-      format = "json"
-    )
-    map_chr(res, "tables")
-  } else {
-    pip(
-      resource = "aux",
-      table = table,
-      release_version = release_version,
-      ppp_version = ppp_version,
-      version = version,
-      format = "csv"
-    )
-  }
+  has_table <- !is.null(table)
+  res <- pip(
+    resource = "aux",
+    table = table,
+    release_version = release_version,
+    ppp_version = ppp_version,
+    version = version,
+    format = if (has_table) "csv" else "json"
+  )
+  if (has_table) res else map_chr(res, "tables")
 }
 
 #' Return valid query parameters
@@ -375,7 +366,7 @@ pip_error_body <- function(resp) {
   }
 }
 
-pip <- function(resource, ..., format = c("json", "csv", "xml", "rds")) {
+pip <- function(resource, ..., format = c("json", "csv")) {
   format <- match.arg(format)
   resp <- wb_request("https://api.worldbank.org/pip/v1") |>
     req_url_path_append(resource) |>
@@ -386,8 +377,6 @@ pip <- function(resource, ..., format = c("json", "csv", "xml", "rds")) {
   switch(
     format,
     json = resp_body_json(resp),
-    csv = clean_strings(resp_body_csv(resp)),
-    xml = resp_body_xml(resp),
-    rds = resp_body_raw(resp)
+    csv = clean_strings(resp_body_csv(resp))
   )
 }

@@ -6,8 +6,20 @@
 \alias{worldbank-package}
 \title{worldbank: Client for the 'World Bank' APIs}
 \description{
-Download and search data from the 'World Bank' APIs, including the 'Indicators' API, the 'Poverty and Inequality Platform (PIP)' API, the 'Finances One' API, and the 'Projects' API. See \url{https://datahelpdesk.worldbank.org/knowledgebase/articles/889386-developer-information-overview} for further details.
+Download and search data from the 'World Bank' APIs, including the 'Indicators' API, the 'Poverty and Inequality Platform (PIP)' API, the 'Finances One' API, the 'Projects' API, and the 'Documents & Reports' API. See \url{https://datahelpdesk.worldbank.org/knowledgebase/articles/889386-developer-information-overview} for further details.
 }
+\section{Options}{
+
+\itemize{
+\item \code{worldbank.cache}: Cache API responses on disk. Default \code{FALSE}. See \code{\link[=wb_cache_dir]{wb_cache_dir()}}.
+\item \code{worldbank.cache_max_age}: Delete cached responses older than this many seconds. Default
+\code{86400} (1 day). It doesn't extend how long a response is reused, which each API decides. See
+\code{\link[=wb_cache_dir]{wb_cache_dir()}}.
+\item \code{worldbank.progress}: Show a progress bar for paginated requests that take longer than a few
+seconds. Default \code{TRUE}. Set to \code{FALSE} to hide it.
+}
+}
+
 \seealso{
 Useful links:
 \itemize{

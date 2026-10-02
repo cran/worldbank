@@ -18,6 +18,7 @@ export(wb_cache_dir)
 export(wb_country)
 export(wb_country_indicator)
 export(wb_data)
+export(wb_document)
 export(wb_income_level)
 export(wb_indicator)
 export(wb_language)
@@ -33,7 +34,6 @@ importFrom(httr2,
   req_error,
   req_perform,
   req_perform_iterative,
-  req_perform_sequential,
   req_retry,
   req_timeout,
   req_url_path_append,
@@ -41,9 +41,7 @@ importFrom(httr2,
   req_user_agent,
   request,
   resp_body_json,
-  resp_body_raw,
   resp_body_string,
-  resp_body_xml,
   resp_content_type,
   resp_has_body,
   resp_status,

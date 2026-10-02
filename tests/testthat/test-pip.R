@@ -24,6 +24,23 @@ test_that("pip CSV responses are trimmed and blanks become NA", {
   expect_equal(res$value, c(1.5, NA))
 })
 
+test_that("pip functions leave the poverty line to the API by default", {
+  urls <- character()
+  httr2::local_mocked_responses(function(req) {
+    urls <<- c(urls, req$url)
+    httr2::response(
+      status_code = 200L,
+      headers = list("content-type" = "text/csv"),
+      body = charToRaw("country_code\nZAF\n")
+    )
+  })
+
+  pip_data("ZAF")
+  pip_cp("ZAF")
+  pip_group("SSF")
+  expect_all_false(grepl("povline", urls, fixed = TRUE))
+})
+
 test_that("pip_data nowcast requires fill_gaps", {
   expect_error(pip_data(nowcast = TRUE), "fill_gaps")
 })
@@ -56,6 +73,34 @@ test_that("PIP version inputs reject values that are not 8 or 4 digits", {
     pip_data(ppp_version = "2017a")
     pip_cp(release_version = 2026)
     pip_group(ppp_version = 20170101)
+  })
+})
+
+test_that("PIP year accepts years and the all and MRV keywords", {
+  urls <- character()
+  httr2::local_mocked_responses(function(req) {
+    urls <<- c(urls, req$url)
+    httr2::response(
+      status_code = 200L,
+      headers = list("content-type" = "text/csv"),
+      body = charToRaw("country_code\nZAF\n")
+    )
+  })
+
+  pip_data("ZAF", year = c(2019, 2020))
+  pip_data("ZAF", year = "MRV")
+  pip_data("ZAF", year = "all")
+  pip_group("SSF", year = "mrv")
+  years <- regmatches(urls, regexpr("year=[^&]+", urls))
+  expect_identical(years, c("year=2019,2020", "year=MRV", "year=all", "year=mrv"))
+})
+
+test_that("PIP year rejects invalid values", {
+  expect_snapshot(error = TRUE, {
+    pip_data(year = "latest")
+    pip_data(year = c("2019", "MRV"))
+    pip_data(year = 19)
+    pip_group(year = "2019a")
   })
 })
 

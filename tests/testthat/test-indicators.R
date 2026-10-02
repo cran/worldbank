@@ -1,42 +1,42 @@
 test_that("wb_language", {
   local_mocked_bindings(
-    worldbank = function(...) readRDS(test_path("fixtures", "wb-language.rds"))
+    worldbank = \(...) readRDS(test_path("fixtures", "wb-language.rds"))
   )
   actual <- wb_language()
   expect_s3_class(actual, "data.frame")
   expect_shape(actual, dim = c(23L, 3L))
   expect_all_true(map_lgl(actual, is.character))
   expect_all_true(map_lgl(actual, \(x) all(nzchar(x))))
-  expect_false(any(map_lgl(actual, has_ws)))
+  expect_all_false(has_ws(unlist(actual)))
 })
 
 test_that("wb_lending_type", {
   local_mocked_bindings(
-    worldbank = function(...) readRDS(test_path("fixtures", "wb-lending-type.rds"))
+    worldbank = \(...) readRDS(test_path("fixtures", "wb-lending-type.rds"))
   )
   actual <- wb_lending_type()
   expect_s3_class(actual, "data.frame")
   expect_shape(actual, dim = c(4L, 3L))
   expect_all_true(map_lgl(actual, is.character))
   expect_all_true(map_lgl(actual, \(x) all(nzchar(x))))
-  expect_false(any(map_lgl(actual, has_ws)))
+  expect_all_false(has_ws(unlist(actual)))
 })
 
 test_that("wb_income_level", {
   local_mocked_bindings(
-    worldbank = function(...) readRDS(test_path("fixtures", "wb-income-level.rds"))
+    worldbank = \(...) readRDS(test_path("fixtures", "wb-income-level.rds"))
   )
   actual <- wb_income_level()
   expect_s3_class(actual, "data.frame")
   expect_shape(actual, dim = c(7L, 3L))
   expect_all_true(map_lgl(actual, is.character))
   expect_all_true(map_lgl(actual, \(x) all(nzchar(x))))
-  expect_false(any(map_lgl(actual, has_ws)))
+  expect_all_false(has_ws(unlist(actual)))
 })
 
 test_that("wb_source", {
   local_mocked_bindings(
-    worldbank = function(...) readRDS(test_path("fixtures", "wb-source.rds"))
+    worldbank = \(...) readRDS(test_path("fixtures", "wb-source.rds"))
   )
   actual <- wb_source()
   expect_s3_class(actual, "data.frame")
@@ -44,14 +44,14 @@ test_that("wb_source", {
   for (x in actual) {
     if (is.character(x)) {
       expect_all_true(nzchar(x))
-      expect_false(has_ws(x))
+      expect_all_false(has_ws(x))
     }
   }
 })
 
 test_that("wb_topic", {
   local_mocked_bindings(
-    worldbank = function(...) readRDS(test_path("fixtures", "wb-topic.rds"))
+    worldbank = \(...) readRDS(test_path("fixtures", "wb-topic.rds"))
   )
   actual <- wb_topic()
   expect_s3_class(actual, "data.frame")
@@ -59,14 +59,14 @@ test_that("wb_topic", {
   for (x in actual) {
     if (is.character(x)) {
       expect_all_true(nzchar(x))
-      expect_false(has_ws(x))
+      expect_all_false(has_ws(x))
     }
   }
 })
 
 test_that("wb_region", {
   local_mocked_bindings(
-    worldbank = function(...) readRDS(test_path("fixtures", "wb-region.rds"))
+    worldbank = \(...) readRDS(test_path("fixtures", "wb-region.rds"))
   )
   actual <- wb_region()
   expect_s3_class(actual, "data.frame")
@@ -74,14 +74,14 @@ test_that("wb_region", {
   for (x in actual) {
     if (is.character(x)) {
       expect_all_true(nzchar(x))
-      expect_false(has_ws(x))
+      expect_all_false(has_ws(x))
     }
   }
 })
 
 test_that("wb_country", {
   local_mocked_bindings(
-    worldbank = function(...) readRDS(test_path("fixtures", "wb-country.rds"))
+    worldbank = \(...) readRDS(test_path("fixtures", "wb-country.rds"))
   )
   actual <- wb_country()
   expect_s3_class(actual, "data.frame")
@@ -89,29 +89,119 @@ test_that("wb_country", {
   for (x in actual) {
     if (is.character(x)) {
       expect_all_true(nzchar(x))
-      expect_false(has_ws(x))
+      expect_all_false(has_ws(x))
     }
   }
+})
+
+test_that("wb_country passes filters to the API", {
+  captured <- NULL
+  local_mocked_bindings(worldbank = function(...) {
+    captured <<- list(...)
+    readRDS(test_path("fixtures", "wb-country.rds"))
+  })
+  wb_country()
+  expect_null(captured$region)
+  wb_country(region = c("SSF", "LCN"), income_level = "LIC", lending_type = "IDX")
+  expect_identical(captured$region, c("SSF", "LCN"))
+  expect_identical(captured$incomeLevel, "LIC")
+  expect_identical(captured$lendingType, "IDX")
+})
+
+test_that("wb_country takes lang as its second argument", {
+  captured <- NULL
+  local_mocked_bindings(worldbank = function(...) {
+    captured <<- list(...)
+    readRDS(test_path("fixtures", "wb-country.rds"))
+  })
+  wb_country("US", "fr")
+  expect_identical(captured$lang, "fr")
+  expect_null(captured$region)
+})
+
+test_that("wb_country drops duplicated countries", {
+  countries <- readRDS(test_path("fixtures", "wb-country.rds"))
+  local_mocked_bindings(worldbank = \(...) rep(countries[1:2], each = 2L))
+  actual <- wb_country(lending_type = "IDX")
+  expect_identical(actual$country_id, map_chr(countries[1:2], "id"))
 })
 
 test_that("wb_indicator", {
   local_mocked_bindings(
-    worldbank = function(...) readRDS(test_path("fixtures", "wb-indicator.rds"))
+    worldbank = \(...) readRDS(test_path("fixtures", "wb-indicator.rds"))
   )
   actual <- wb_indicator()
   expect_s3_class(actual, "data.frame")
   expect_shape(actual, dim = c(100L, 9L))
+  expect_type(actual$topic_id, "character")
+  expect_type(actual$topic_value, "character")
   for (x in actual) {
     if (is.character(x)) {
       expect_all_true(nzchar(x))
-      expect_false(has_ws(x))
+      expect_all_false(has_ws(x))
     }
   }
 })
 
+test_that("wb_indicator passes source to the API", {
+  captured <- NULL
+  local_mocked_bindings(worldbank = function(...) {
+    captured <<- list(...)$source
+    readRDS(test_path("fixtures", "wb-indicator.rds"))
+  })
+  wb_indicator(source = 11)
+  expect_identical(captured, 11)
+})
+
+test_that("wb_indicator keeps every topic", {
+  indicator <- readRDS(test_path("fixtures", "wb-indicator.rds"))[[1L]]
+  indicator$topics <- list(
+    list(id = "1", value = "Agriculture & Rural Development  "),
+    list(id = "19", value = "Climate Change"),
+    list(id = "6", value = "Environment "),
+    list(id = "19", value = "Climate Change")
+  )
+  indicator_without_topics <- indicator
+  indicator_without_topics$id <- "NO.TOPICS"
+  indicator_without_topics$topics <- list()
+  indicator_with_empty_topic <- indicator
+  indicator_with_empty_topic$id <- "EMPTY.TOPIC"
+  indicator_with_empty_topic$topics <- list(setNames(list(), character()))
+  local_mocked_bindings(
+    worldbank = \(...) list(indicator, indicator_without_topics, indicator_with_empty_topic)
+  )
+
+  actual <- wb_indicator(indicator$id)
+
+  expect_identical(actual$topic_id, c("1;19;6", NA, NA))
+  expect_identical(
+    actual$topic_value,
+    c("Agriculture & Rural Development;Climate Change;Environment", NA, NA)
+  )
+  expect_identical(
+    wb_search("Environment", fields = "topic_value", catalog = actual)$id,
+    indicator$id
+  )
+  expect_shape(
+    wb_search("Development Climate", fields = "topic_value", catalog = actual),
+    nrow = 0L
+  )
+})
+
+test_that("wb_indicator returns NA for untranslated topic names", {
+  indicator <- readRDS(test_path("fixtures", "wb-indicator.rds"))[[1L]]
+  indicator$topics <- list(list(id = "1", value = ""), list(id = "19", value = ""))
+  local_mocked_bindings(worldbank = \(...) list(indicator))
+
+  actual <- wb_indicator(indicator$id, lang = "vi")
+
+  expect_identical(actual$topic_id, "1;19")
+  expect_identical(actual$topic_value, NA_character_)
+})
+
 test_that("wb_country_indicator", {
   local_mocked_bindings(
-    worldbank = function(...) readRDS(test_path("fixtures", "wb-country-indicator.rds"))
+    worldbank = \(...) readRDS(test_path("fixtures", "wb-country-indicator.rds"))
   )
   actual <- wb_country_indicator()
   expect_s3_class(actual, "data.frame")
@@ -120,7 +210,7 @@ test_that("wb_country_indicator", {
   for (x in actual) {
     if (is.character(x)) {
       expect_all_true(nzchar(x))
-      expect_false(has_ws(x))
+      expect_all_false(has_ws(x))
     }
   }
 })
@@ -212,6 +302,9 @@ test_that("wb_country input validation works", {
   expect_error(wb_country(NA))
   expect_error(wb_country(1L))
   expect_error(wb_country(TRUE))
+  expect_snapshot(wb_country(region = "SS"), error = TRUE)
+  expect_snapshot(wb_country(income_level = 1L), error = TRUE)
+  expect_snapshot(wb_country(lending_type = NA), error = TRUE)
   # lang should be two letter code
   expect_error(wb_country(lang = "a"))
   expect_error(wb_country(lang = "abc"))
@@ -227,6 +320,8 @@ test_that("wb_indicator input validation works", {
   expect_error(wb_indicator(NA))
   expect_error(wb_indicator(1L))
   expect_error(wb_indicator(TRUE))
+  expect_snapshot(wb_indicator(source = 0), error = TRUE)
+  expect_snapshot(wb_indicator(source = "2"), error = TRUE)
   # lang should be two letter code
   expect_error(wb_indicator(lang = "a"))
   expect_error(wb_indicator(lang = "abc"))
@@ -238,21 +333,21 @@ test_that("wb_indicator input validation works", {
 test_that("wb_search filters indicators by pattern", {
   indicators <- readRDS(test_path("fixtures", "wb-indicator.rds"))
   local_mocked_bindings(
-    worldbank = function(...) indicators
+    worldbank = \(...) indicators
   )
 
   catalog <- wb_indicator()
 
   actual <- wb_search("HCount")
   expect_s3_class(actual, "data.frame")
-  expect_identical(names(actual), names(catalog))
-  expect_true(nrow(actual) > 0L)
+  expect_named(actual, names(catalog))
+  expect_gt(nrow(actual), 0L)
   hit <- grepl("HCount", catalog$id, ignore.case = TRUE) |
     grepl("HCount", catalog$name, ignore.case = TRUE) |
     grepl("HCount", catalog$source_note, ignore.case = TRUE)
-  expect_identical(nrow(actual), sum(hit, na.rm = TRUE))
+  expect_shape(actual, nrow = sum(hit, na.rm = TRUE))
 
-  expect_identical(nrow(wb_search("zzz_no_match_zzz")), 0L)
+  expect_shape(wb_search("zzz_no_match_zzz"), nrow = 0L)
 
   expect_true(
     nrow(wb_search("hcount")) >= nrow(wb_search("hcount", ignore.case = FALSE))
@@ -262,6 +357,26 @@ test_that("wb_search filters indicators by pattern", {
     wb_search("HCount", catalog = catalog),
     wb_search("HCount")
   )
+})
+
+test_that("wb_search matches fixed patterns literally and case sensitively", {
+  catalog <- data.frame(id = c("A", "B", "C"), name = c("GDP (%)", "gdp (%)", "GDP"))
+
+  expect_no_warning(
+    actual <- wb_search("GDP (%)", fields = "name", catalog = catalog, fixed = TRUE)
+  )
+  expect_identical(actual$id, "A")
+})
+
+test_that("wb_search passes source to wb_indicator", {
+  captured <- NULL
+  indicators <- readRDS(test_path("fixtures", "wb-indicator.rds"))
+  local_mocked_bindings(worldbank = function(...) {
+    captured <<- list(...)$source
+    indicators
+  })
+  wb_search("HCount", source = 11)
+  expect_identical(captured, 11)
 })
 
 test_that("wdi_pivot_long pivots wide WDI data to long format", {
@@ -283,14 +398,14 @@ test_that("wdi_pivot_long pivots wide WDI data to long format", {
     names(long),
     c("country_name", "country_code", "indicator_name", "indicator_code", "year", "value")
   )
-  expect_identical(nrow(long), 6L)
+  expect_shape(long, nrow = 6L)
   expect_identical(long$year, rep(1960:1962, each = 2L))
   expect_identical(long$country_code, rep(c("DEU", "USA"), times = 3L))
   expect_identical(
     long$value,
     c(NA, 543300000000, NA, 563300000000, NA, 605100000000)
   )
-  expect_false("X" %in% names(long))
+  expect_disjoint(names(long), "X")
 })
 
 test_that("wb_bulk input validation works", {
@@ -304,7 +419,7 @@ test_that("wb_bulk input validation works", {
 test_that("wb_search input validation works", {
   catalog <- readRDS(test_path("fixtures", "wb-indicator.rds"))
   local_mocked_bindings(
-    worldbank = function(...) catalog
+    worldbank = \(...) catalog
   )
   expect_error(wb_search(NULL))
   expect_error(wb_search(c("a", "b")))
@@ -313,6 +428,9 @@ test_that("wb_search input validation works", {
   expect_error(wb_search("GDP", fields = character()))
   expect_error(wb_search("GDP", fields = "not_a_column"), "not_a_column")
   expect_error(wb_search("GDP", catalog = list()))
+  expect_snapshot(wb_search("GDP", source = 0), error = TRUE)
+  expect_snapshot(wb_search("GDP", source = "2"), error = TRUE)
+  expect_snapshot(wb_search("GDP", fixed = NA), error = TRUE)
 })
 
 test_that("wb_country_indicator input validation works", {
@@ -337,7 +455,7 @@ test_that("wb_country_indicator input validation works", {
 })
 
 test_that("wb_data returns an empty data.frame when there are no observations", {
-  local_mocked_bindings(worldbank = function(...) NULL)
+  local_mocked_bindings(worldbank = \(...) NULL)
   actual <- wb_data("NY.GDP.MKTP.CD", "US")
   expect_s3_class(actual, "data.frame")
   expect_shape(actual, dim = c(0L, 10L))
@@ -357,12 +475,10 @@ test_that("wb_data preserves mixed-frequency dates as character", {
     )
   }
   local_mocked_bindings(
-    worldbank_seq = function(resource, ...) {
-      lapply(resource, function(x) {
-        indicator <- sub(".*/", "", x)
-        date <- if (indicator == "ANNUAL") "2020" else "2020Q1"
-        list(observation(date, indicator))
-      })
+    worldbank = function(resource, ...) {
+      indicator <- sub(".*/", "", resource)
+      date <- if (indicator == "ANNUAL") "2020" else "2020Q1"
+      list(observation(date, indicator))
     }
   )
 
@@ -384,7 +500,7 @@ test_that("wb_data returns footnotes only when asked", {
     }
   )
 
-  expect_false("footnote" %in% names(wb_data("SI.POV.DDAY", "ALB")))
+  expect_disjoint(names(wb_data("SI.POV.DDAY", "ALB")), "footnote")
   expect_null(captured)
 
   actual <- wb_data("SI.POV.DDAY", "ALB", footnote = TRUE)
@@ -394,15 +510,55 @@ test_that("wb_data returns footnotes only when asked", {
 
 test_that("wb_data returns footnotes for multiple indicators", {
   local_mocked_bindings(
-    worldbank_seq = function(resource, ...) {
-      lapply(resource, function(x) {
-        indicator <- sub(".*/", "", x)
-        list(wb_observation(indicator, footnote = paste("note for", indicator)))
-      })
+    worldbank = function(resource, ...) {
+      indicator <- sub(".*/", "", resource)
+      list(wb_observation(indicator, footnote = paste("note for", indicator)))
     }
   )
   actual <- wb_data(c("a", "b"), "ALB", footnote = TRUE)
   expect_identical(actual$footnote, c("note for A", "note for B"))
+})
+
+test_that("wb_data passes source to the API", {
+  captured <- NULL
+  local_mocked_bindings(worldbank = function(...) {
+    captured <<- list(...)$source
+    list(wb_observation())
+  })
+  wb_data("AG.AGR.TRAC.NO", "ZAF", source = 11)
+  expect_identical(captured, 11)
+})
+
+test_that("wb_data falls back to the country ID for missing ISO3 codes", {
+  observation <- function(id, iso3) {
+    obs <- wb_observation()
+    obs$country$id <- id
+    obs$countryiso3code <- iso3
+    obs
+  }
+  local_mocked_bindings(
+    worldbank = \(...) list(observation("ZAF", ""), observation("XD", ""), wb_observation())
+  )
+  actual <- wb_data("NY.GDP.MKTP.CD", "ZAF", source = 11)
+  expect_identical(actual$country_code, c("ZAF", NA, "ALB"))
+})
+
+test_that("wb_data passes mrnev to the API", {
+  captured <- NULL
+  local_mocked_bindings(worldbank = function(...) {
+    captured <<- list(...)$mrnev
+    list(wb_observation())
+  })
+  wb_data("SI.POV.DDAY", "ALB", mrnev = 1)
+  expect_identical(captured, 1)
+})
+
+test_that("wb_data handles observations without a unit", {
+  obs <- wb_observation()
+  obs$unit <- NULL
+  local_mocked_bindings(worldbank = \(...) list(obs))
+  actual <- wb_data("SI.POV.DDAY", "ALB", mrnev = 1)
+  expect_identical(actual$unit, NA_character_)
 })
 
 test_that("wb_data mrv and gapfill validation works", {
@@ -413,6 +569,51 @@ test_that("wb_data mrv and gapfill validation works", {
   expect_error(wb_data(mrv = "a"))
   expect_error(wb_data(footnote = "yes"))
   expect_error(wb_data(footnote = NA))
+  expect_snapshot(wb_data(source = 0), error = TRUE)
+  expect_snapshot(wb_data(source = "2"), error = TRUE)
+})
+
+test_that("wb_data mrnev validation works", {
+  expect_snapshot(wb_data(mrnev = 0), error = TRUE)
+  expect_snapshot(wb_data(mrnev = 1, start_date = 2020), error = TRUE)
+  expect_snapshot(wb_data(mrnev = 1, mrv = 1), error = TRUE)
+})
+
+test_that("lang is validated", {
+  expect_snapshot(wb_lending_type(lang = "english"), error = TRUE)
+  expect_snapshot(wb_income_level(lang = "english"), error = TRUE)
+  expect_snapshot(wb_source(lang = "english"), error = TRUE)
+  expect_snapshot(wb_topic(lang = "english"), error = TRUE)
+  expect_snapshot(wb_region(lang = NULL), error = TRUE)
+  expect_snapshot(wb_country(lang = NULL), error = TRUE)
+  expect_snapshot(wb_indicator(lang = c("en", "es")), error = TRUE)
+  expect_snapshot(wb_search("gdp", lang = "english"), error = TRUE)
+  expect_snapshot(wb_data(lang = NA_character_), error = TRUE)
+})
+
+test_that("worldbank fetches every page", {
+  httr2::local_mocked_responses(function(req) {
+    page <- httr2::url_parse(req$url)$query$page %||% "1"
+    httr2::response(
+      status_code = 200L,
+      headers = list("content-type" = "application/json"),
+      body = charToRaw(sprintf('[{"page":%s,"pages":"3"},[{"id":"%s"}]]', page, page))
+    )
+  })
+
+  expect_identical(map_chr(worldbank("indicator"), "id"), c("1", "2", "3"))
+})
+
+test_that("worldbank returns NULL when there is no data", {
+  httr2::local_mocked_responses(function(req) {
+    httr2::response(
+      status_code = 200L,
+      headers = list("content-type" = "application/json"),
+      body = charToRaw('[{"page":1,"pages":0,"total":0},null]')
+    )
+  })
+
+  expect_null(worldbank("indicator"))
 })
 
 test_that("error parsing works", {
@@ -421,4 +622,17 @@ test_that("error parsing works", {
   skip_on_ci()
 
   expect_snapshot(wb_indicator("something.wrong"), error = TRUE)
+})
+
+test_that("error parsing works with multiple messages", {
+  msg <- '{"id":"120","key":"Invalid value","value":"The provided parameter value is not valid"}'
+  httr2::local_mocked_responses(function(req) {
+    httr2::response(
+      status_code = 200L,
+      headers = list("content-type" = "application/json"),
+      body = charToRaw(sprintf('[{"message":[%s,%s]}]', msg, msg))
+    )
+  })
+
+  expect_snapshot(wb_data("NY.GDP.MKTP.CD", "ZAF", source = 99999), error = TRUE)
 })

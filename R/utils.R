@@ -31,11 +31,14 @@ to_logical <- function(x) {
 }
 
 format_param <- function(x) {
-  x <- x %||% "all"
-  if (length(x) > 1L) {
-    x <- paste0(x, collapse = ";")
+  paste(x %||% "all", collapse = ";")
+}
+
+collapse_or <- function(x) {
+  if (length(x) == 0L) {
+    return()
   }
-  x
+  paste0(x, collapse = "^")
 }
 
 format_date <- function(start_date, end_date) {
