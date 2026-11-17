@@ -22,7 +22,8 @@
 #'   Document ID(s) to filter by, as returned in the `id` column. Default `NULL`.
 #' @param limit (`NULL` | `integer(1)`)\cr
 #'   The maximum number of documents to return. Default `NULL`. If `NULL`, all matching documents
-#'   are returned, which can take many requests for broad queries.
+#'   are returned, which can take many requests for broad queries. Documents are returned in
+#'   descending order of `date`, so the most recent documents come first.
 #' @returns A `data.frame()` with World Bank document data. Since a document can have several
 #'   types, countries, regions, and projects, `type`, `major_type`, `country_code`, `country`,
 #'   `region`, and `project_id` hold all of them separated by `;`, which never occurs within a
@@ -119,19 +120,28 @@ document_fields <- c(
 )
 
 documents <- function(..., limit = NULL) {
-  per_page <- min(limit %||% 1000L, 1000L)
-  max_reqs <- if (!is.null(limit)) ceiling(limit / per_page) else Inf
+  page_size <- min(limit %||% 1000L, 1000L)
+  max_reqs <- if (!is.null(limit)) ceiling(limit / page_size) else Inf
 
+  # the default order by relevance has ties, so paging by offset repeats and skips documents
   req <- wb_request("https://search.worldbank.org/api/v3/wds") |>
-    req_url_query(..., format = "json", rows = per_page, fl = document_fields, .multi = "comma")
+    req_url_query(
+      ...,
+      format = "json",
+      rows = page_size,
+      fl = document_fields,
+      srt = "docdt",
+      order = "desc",
+      .multi = "comma"
+    )
 
   resps <- req_perform_iterative(
     req,
     next_req = iterate_with_offset(
       "os",
       start = 0L,
-      offset = per_page,
-      resp_pages = \(resp) resp_total_pages(resp, per_page),
+      offset = page_size,
+      resp_pages = \(resp) resp_total_pages(resp, page_size),
       resp_complete = \(resp) length(resp_documents(resp)) == 0L
     ),
     max_reqs = max_reqs,
@@ -139,6 +149,9 @@ documents <- function(..., limit = NULL) {
   )
 
   data <- resps_data(resps, resp_documents)
+  # documents with the same date can still shift between pages
+  ids <- map_chr(data, \(x) x$id %||% NA_character_)
+  data <- data[is.na(ids) | !duplicated(ids)]
   if (!is.null(limit)) {
     data <- utils::head(data, limit)
   }
@@ -146,7 +159,7 @@ documents <- function(..., limit = NULL) {
 }
 
 resp_documents <- function(resp) {
-  docs <- resp_body_json(resp)$documents
+  docs <- resp_body_json(resp, check_type = FALSE)$documents
   docs$facets <- NULL
   unname(docs)
 }
@@ -171,17 +184,17 @@ parse_documents <- function(data) {
   )
   res$date <- as.Date(sub("T.*", "", res$date))
   res <- clean_strings(res)
-  res$type <- normalize_values(res$type, ";")
-  res$major_type <- normalize_values(res$major_type, ";")
-  res$country_code <- normalize_values(res$country_code, ",")
+  res$type <- rejoin(res$type, ";")
+  res$major_type <- rejoin(res$major_type, ";")
+  res$country_code <- rejoin(res$country_code, ",")
   # names can contain ", " themselves, e.g. "Congo, Democratic Republic of"
-  res$country <- normalize_values(res$country, ",(?! )")
-  res$region <- normalize_values(res$region, ";")
-  res$project_id <- normalize_values(res$project_id, ",")
+  res$country <- rejoin(res$country, ",(?! )")
+  res$region <- rejoin(res$region, ";")
+  res$project_id <- rejoin(res$project_id, ",")
   res
 }
 
-normalize_values <- function(x, split) {
+rejoin <- function(x, split) {
   res <- map_chr(x, function(value) {
     if (is.na(value)) {
       return(NA_character_)

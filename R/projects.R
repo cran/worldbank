@@ -121,15 +121,15 @@ project_fields <- c(
 )
 
 projects <- function(..., limit = NULL) {
-  per_page <- min(limit %||% 1000L, 1000L)
-  max_reqs <- if (!is.null(limit)) ceiling(limit / per_page) else Inf
+  page_size <- min(limit %||% 1000L, 1000L)
+  max_reqs <- if (!is.null(limit)) ceiling(limit / page_size) else Inf
 
   # the default order by approval date has ties, so paging by offset repeats and skips projects
   req <- wb_request("https://search.worldbank.org/api/v2/projects") |>
     req_url_query(
       ...,
       format = "json",
-      rows = per_page,
+      rows = page_size,
       fl = project_fields,
       srt = "id",
       order = "desc",
@@ -141,15 +141,15 @@ projects <- function(..., limit = NULL) {
     next_req = iterate_with_offset(
       "os",
       start = 0L,
-      offset = per_page,
-      resp_pages = \(resp) resp_total_pages(resp, per_page),
-      resp_complete = \(resp) length(resp_body_json(resp)$projects) == 0L
+      offset = page_size,
+      resp_pages = \(resp) resp_total_pages(resp, page_size),
+      resp_complete = \(resp) length(resp_body_json(resp, check_type = FALSE)$projects) == 0L
     ),
     max_reqs = max_reqs,
     progress = wb_progress()
   )
 
-  data <- resps_data(resps, \(resp) unname(resp_body_json(resp)$projects))
+  data <- resps_data(resps, \(resp) unname(resp_body_json(resp, check_type = FALSE)$projects))
   if (!is.null(limit)) {
     data <- utils::head(data, limit)
   }

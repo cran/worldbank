@@ -26,10 +26,6 @@ to_snake_case <- function(x) {
   gsub("^_+|_+$", "", x)
 }
 
-to_logical <- function(x) {
-  x == "Y"
-}
-
 format_param <- function(x) {
   paste(x %||% "all", collapse = ";")
 }
@@ -41,7 +37,7 @@ collapse_or <- function(x) {
   paste0(x, collapse = "^")
 }
 
-format_date <- function(start_date, end_date) {
+format_date_range <- function(start_date, end_date) {
   if (!is.null(start_date) && !is.null(end_date)) {
     paste(start_date, end_date, sep = ":")
   } else {
